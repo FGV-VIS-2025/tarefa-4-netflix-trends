@@ -14,6 +14,7 @@
     let hoveredIndex = -1;
     let cursor = { x: 0, y: 0 };
     let tooltipPosition = { x: 0, y: 0 };
+    const jitterAmount = 5;
   
     let width = 800, height = 500;
     let margin = { top: 20, right: 30, bottom: 50, left: 50 };
@@ -98,10 +99,11 @@
         <circle
           on:mouseenter={evt => dotInteraction(index, evt)}
           on:mouseleave={evt => dotInteraction(index, evt)}
-          cx={xScale(d.release_year)}
-          cy={yScale(d.imdb_score)}
+          cx={ xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount }
+          cy={ yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount }
           r="4"
           fill="steelblue"
+          fill-opacity="0.8"
         />
       {/each}
     </g>
@@ -137,7 +139,7 @@
     }
   
     circle:hover {
-      transform: scale(1.5);
+      transform: scale(1.2);
       fill: orange;
     }
   
