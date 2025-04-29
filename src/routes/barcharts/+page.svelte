@@ -71,25 +71,33 @@
     });
 
     async function ageBarInteraction(index, evt) {
-        let hoveredBar = evt.target;
         if (evt.type === 'mouseenter') {
-            hoveredIndex = index;
+            hoveredAgeIndex = index;
             cursor = { x: evt.x, y: evt.y };
         } else if (evt.type === 'mouseleave') {
-            hoveredIndex = -1;
+            hoveredAgeIndex = -1;
         }
-        // else if(evt.type === "click") {
-        //     let ageCertification = data[index].age_certification
-        //     console.log("age")
-        //     // Adding newly clicked commit
-        //     if (!clickedAges.includes(ageCertification)){
-        //         clickedAges = [...clickedAges, ageCertification]
-        //     }
-        //     else {
-        //         clickedAges = clickedAges.filter(c => c !== ageCertification)
-        //     }
-        //     console.log("clicked ages:", clickedAges)
-        // }
+        else if(evt.type === "click") {
+            let ageCertification = ageData[index].age_certification
+            console.log("age")
+            // Adding newly clicked movies
+            if (!clickedAges.includes(ageCertification)){
+                clickedAges = [...clickedAges, ageCertification]
+            }
+            else {
+                clickedAges = clickedAges.filter(c => c !== ageCertification)
+            }
+            console.log("clicked ages:", clickedAges)
+        }
+    }
+    
+    async function yearBarInteraction(index, evt) {
+        if (evt.type === 'mouseenter') {
+            hoveredYearIndex = index;
+            cursor = { x: evt.x, y: evt.y };
+        } else if (evt.type === 'mouseleave') {
+            hoveredYearIndex = -1;
+        }
     }
 
     // Updates tooltip position
@@ -98,7 +106,8 @@
         tooltipPosition.y = cursor.y + 10;
     }
 
-    $: hoveredMovie = ageData[hoveredIndex] ?? hoveredMovie ?? {};
+    $: hoveredAge = ageData[hoveredAgeIndex] || {};
+    $: hoveredYear = releaseYearData[hoveredYearIndex] || {};
     
     $: uniqueAges = [...new Set(ageData.map(d => d.age_certification))];
     $: uniqueYears = [...new Set(releaseYearData.map(d => d.release_year))];
@@ -132,26 +141,26 @@
 
 <h2>
     Movie Counts by age Certification
-</h2> -->
+</h2>
 
-<dl class="info tooltip" hidden={hoveredIndex === -1} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={tooltip}>
+<dl class="info tooltip" hidden={hoveredAgeIndex === -1} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={tooltip}>
     <dt>Classificação</dt>
-    <dd>{hoveredMovie.age_certification}</dd>
+    <dd>{hoveredAge.age_certification}</dd>
     
     <dt>Numero de filmes</dt>
-    <dd>{hoveredMovie.count}</dd>
+    <dd>{hoveredAge.count}</dd>
 </dl>
 
-<svg viewBox={`0 0 ${width} ${height}`} bind:this={svgContainer}>
+<svg viewBox={`0 0 ${width} ${height}`} bind:this={svgContainer1}>
     <g transform="translate(0, {usableArea.bottom})" bind:this={ageXAxis}/>
     <g transform="translate({usableArea.left}, 0)" bind:this={ageYAxis}/>
     
     <g class="bars">
         {#each ageData as d, index}
         <rect 
-        on:mouseenter={evt => barInteraction(index, evt)}
-        on:mouseleave={evt => barInteraction(index, evt)}
-        on:click={evt => barInteraction(index, evt)}
+        on:mouseenter={evt => ageBarInteraction(index, evt)}
+        on:mouseleave={evt => ageBarInteraction(index, evt)}
+        on:click={evt => ageBarInteraction(index, evt)}
         
         class:selected={ clickedAges.includes(d.age_certification) }
         
@@ -180,24 +189,34 @@
     >Contagedm de filmes</text>
 </svg>
         
-<!-- <h2>
+<h2>
     Movie Counts by Release Year
 </h2>
 
-<svg viewBox={`0 0 ${width} ${height}`} bind:this={svgContainer}>
+<dl class="info tooltip" hidden={hoveredYearIndex === -1} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px">
+    <dt>Release Year</dt>
+    <dd>{hoveredYear.release_year || ''}</dd>
+    
+    <dt>Number of Movies</dt>
+    <dd>{hoveredYear.count || 0}</dd>
+</dl>
+
+<svg viewBox={`0 0 ${width} ${height}`} bind:this={svgContainer2}>
     <g transform="translate(0, {usableArea.bottom})" bind:this={yearXAxis}/>
     <g transform="translate({usableArea.left}, 0)" bind:this={yearYAxis}/>
     
     <g class="bars">
         {#each releaseYearData as d, index}
             <rect 
-                on:mouseenter={evt => barInteraction(index, evt)}
-                on:mouseleave={evt => barInteraction(index, evt)}
+                on:mouseenter={evt => yearBarInteraction(index, evt)}
+                on:mouseleave={evt => yearBarInteraction(index, evt)}
 
                 x={yearXScale(d.release_year)}
                 y={yearYScale(d.count)}
                 width={yearXScale.bandwidth(d.release_year)}
                 height={usableArea.bottom - yearYScale(d.count)}
+
+                fill="steelblue"
             />
         {/each}
     </g>
@@ -216,7 +235,7 @@
         font-size="12"
         transform="rotate(-90)"
     >Number of Movies</text>
-</svg> -->
+</svg>
 
 <style>
     svg {
