@@ -11,7 +11,7 @@
     let xAxis, yAxis;
     let tooltip;
     let data = [];
-    let hoveredIndex = -1;
+    let hoveredMovie = null;
     let cursor = { x: 0, y: 0 };
     let tooltipPosition = { x: 0, y: 0 };
     const jitterAmount = 5;
@@ -41,24 +41,19 @@
     });
   
     async function dotInteraction(index, evt) {
-      let hoveredDot = evt.target;
-      if (evt.type === 'mouseenter') {
-        hoveredIndex = index;
-        cursor = { x: evt.x, y: evt.y };
-        tooltipPosition = await computePosition(hoveredDot, tooltip, {
-          strategy: 'fixed',
-          middleware: [
-            offset(5),
-            autoPlacement()
-          ],
-        });
-      } else if (evt.type === 'mouseleave') {
-        hoveredIndex = -1;
-      }
+        let hoveredDot = evt.target;
+        if (evt.type === "mouseenter") {
+            hoveredMovie = filteredData[index]; // Agora pegando do filtrado
+            cursor = { x: evt.clientX, y: evt.clientY };
+            tooltipPosition = await computePosition(hoveredDot, tooltip, {
+            strategy: "fixed",
+            middleware: [offset(5), autoPlacement()],
+            });
+        } else if (evt.type === "mouseleave") {
+            hoveredMovie = null;
+        }
     }
-  
-    $: hoveredMovie = data[hoveredIndex] ?? hoveredMovie ?? {};
-  
+    
     $: xExtent = d3.extent(data, d => d.release_year);
     $: yExtent = [0, 10]; // IMDb vai de 0 a 10
   
@@ -75,37 +70,52 @@
       if (xAxis) d3.select(xAxis).call(d3.axisBottom(xScale).tickFormat(d3.format('d')));
       if (yAxis) d3.select(yAxis).call(d3.axisLeft(yScale));
     }
+
+    let searchTerm = "";
+    let filteredData = [];
+
+    // Atualiza o filtro quando searchTerm mudar
+    $: filteredData = data.filter(d => 
+    d.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 </script>
   
 <h1>IMDb Scores x Ano de Lançamento</h1>
   
-<dl class="info tooltip" hidden={hoveredIndex === -1} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={tooltip}>
+<dl class="info tooltip" hidden={hoveredMovie === null} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={tooltip}>
     <dt>Título</dt>
-    <dd>{hoveredMovie.title}</dd>
-  
+    <dd>{hoveredMovie?.title}</dd>
+    
     <dt>Ano</dt>
-    <dd>{hoveredMovie.release_year}</dd>
-  
+    <dd>{hoveredMovie?.release_year}</dd>
+    
     <dt>IMDb Score</dt>
-    <dd>{hoveredMovie.imdb_score}</dd>
+    <dd>{hoveredMovie?.imdb_score}</dd>
 </dl>
+
+<input
+  type="text"
+  placeholder="Pesquisar filmes..."
+  bind:value={searchTerm}
+  style="margin-bottom: 20px; padding: 8px; font-size: 16px; width: 300px;"
+/>
   
 <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgContainer}>
     <g transform="translate(0, {usableArea.bottom})" bind:this={xAxis} />
     <g transform="translate({usableArea.left}, 0)" bind:this={yAxis} />
   
     <g class="dots">
-      {#each data as d, index}
-        <circle
-          on:mouseenter={evt => dotInteraction(index, evt)}
-          on:mouseleave={evt => dotInteraction(index, evt)}
-          cx={ xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount }
-          cy={ yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount }
-          r="4"
-          fill="steelblue"
-          fill-opacity="0.8"
-        />
-      {/each}
+        {#each filteredData as d, index }
+            <circle
+            on:mouseenter={evt => dotInteraction(index, evt)}
+            on:mouseleave={evt => dotInteraction(index, evt)}
+            cx={ xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount }
+            cy={ yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount }
+            r="4"
+            fill="steelblue"
+            fill-opacity="0.7"
+            />
+        {/each}
     </g>
   
     <!-- Eixos títulos -->
