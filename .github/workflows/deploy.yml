@@ -18,24 +18,22 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: ./my-portfolio/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: |
-          cd my-portfolio
           npm install
 
       - name: Build Sveltekit
         env:
           BASE_PATH: "/${{ github.event.repository.name }}"
         run: |
-          cd my-portfolio
           npm run build
 
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "my-portfolio/build/"
+          path: "build/"
 
   deploy:
     needs: build_site
