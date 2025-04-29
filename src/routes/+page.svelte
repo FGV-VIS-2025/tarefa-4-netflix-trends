@@ -347,7 +347,7 @@
     </div>
   </div>
   
-  <svg viewBox={0 0 ${width} ${height}} bind:this={svgScatter}>
+  <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgScatter}>
     <g transform="translate(0, {usableArea.bottom})" bind:this={xAxisScatter} />
     <g transform="translate({usableArea.left}, 0)" bind:this={yAxisScatter} />
   
@@ -399,7 +399,7 @@
       </div>
       
       <div class="chart-container">
-        <svg viewBox={0 0 ${width} ${height}} bind:this={svgAgeChart}>
+        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgAgeChart}>
           <g transform="translate(0, {usableArea.bottom})" bind:this={ageXAxis}/>
           <g transform="translate({usableArea.left}, 0)" bind:this={ageYAxis}/>
           
@@ -454,7 +454,7 @@
       </div>
       
       <div class="chart-container">
-        <svg viewBox={0 0 ${width} ${height}} bind:this={svgYearChart}>
+        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgYearChart}>
           <g transform="translate(0, {usableArea.bottom})" bind:this={yearXAxis}/>
           <g transform="translate({usableArea.left}, 0)" bind:this={yearYAxis}/>
           
