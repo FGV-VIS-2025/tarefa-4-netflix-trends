@@ -24,6 +24,8 @@
     let clickedYears = [];
     let releaseYearData = [];
     let filteredYearData = [];
+    let totalMoviesAge = 0;
+    let totalMoviesYear = 0;
 
     let usableArea = {
         top: margin.top,
@@ -58,6 +60,9 @@
         // Initialize filtered data with all data
         filteredAgeData = [...ageData];
         filteredYearData = [...releaseYearData];
+        
+        // Calculate total movies for both charts
+        updateTotals();
     }
     
     // Process age certification data
@@ -114,6 +119,12 @@
         }
     }
     
+    // Calculate total movies in each chart
+    function updateTotals() {
+        totalMoviesAge = filteredAgeData.reduce((sum, item) => sum + item.count, 0);
+        totalMoviesYear = filteredYearData.reduce((sum, item) => sum + item.count, 0);
+    }
+    
     // Function to update charts when filters change
     function updateCharts() {
         // Update age data based on selected years
@@ -133,6 +144,9 @@
             processYearData();
             filteredYearData = [...releaseYearData];
         }
+        
+        // Update totals after filtering
+        updateTotals();
     };
 
     function ageBarInteraction(index, evt) {
@@ -217,6 +231,9 @@
 <div class="content">
     <div class="chart">
         <h2>Movie Counts by Age Certification</h2>
+        <div class="chart-info">
+            <span class="total-counter">Total Movies: {totalMoviesAge}</span>
+        </div>
         
         <div class="chart-container">
             <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgContainer1}>
@@ -269,6 +286,9 @@
 
     <div class="chart">
         <h2>Movie Counts by Release Year</h2>
+        <div class="chart-info">
+            <span class="total-counter">Total Movies: {totalMoviesYear}</span>
+        </div>
         
         <div class="chart-container">
             <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgContainer2}>
@@ -444,4 +464,30 @@
     .chart {
         width: 48%;
     }
+    
+    /* Styles for the total counter */
+    .chart-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+    
+    .total-counter {
+        background-color: #f0f0f0;
+        padding: 5px 10px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        font-weight: bold;
+    }
 </style>
+
+<!-- Add reset filter button -->
+<div class="chart-controls">
+    <button on:click={() => {
+        clickedAges = [];
+        clickedYears = [];
+        processAllData();
+    }} class="reset-button">Reset All Filters</button>
+</div>
