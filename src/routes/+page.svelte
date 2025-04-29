@@ -50,7 +50,7 @@
   
   onMount(async () => {
     // Load all data
-    movieData = await d3.csv('/data/titles.csv', d => ({
+    movieData = await d3.csv('./data/titles.csv', d => ({
       id: d.id,  
       title: d.title,
       release_year: +d.release_year,
@@ -61,7 +61,7 @@
     movieData = movieData.filter(d => d.id && d.title && !isNaN(d.release_year) && !isNaN(d.imdb_score));
   
     // Load credits data
-    credits = await d3.csv('/data/credits_actors.csv', d => ({
+    credits = await d3.csv('./data/credits_actors.csv', d => ({
       id: d.id,
       name: d.name,
       character: d.character
