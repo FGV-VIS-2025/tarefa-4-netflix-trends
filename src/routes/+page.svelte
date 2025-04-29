@@ -1,97 +1,133 @@
 <script>
     import * as d3 from 'd3';
     import { onMount } from 'svelte';
-    import {
-      computePosition,
-      autoPlacement,
-      offset,
-    } from '@floating-ui/dom';
-  
+    import { computePosition, autoPlacement, offset } from '@floating-ui/dom';
+    
     let svgContainer;
     let xAxis, yAxis;
     let tooltip;
     let data = [];
+    let credits = [];
+    let actorList = []; 
+    let actorToMovies = new Map();
+    let selectedActor = "";
+    let searchTerm = "";
     let hoveredMovie = null;
     let cursor = { x: 0, y: 0 };
     let tooltipPosition = { x: 0, y: 0 };
-    const jitterAmount = 5;
-  
+    
     let width = 800, height = 500;
     let margin = { top: 20, right: 30, bottom: 50, left: 50 };
-  
     let usableArea = {
       top: margin.top,
       right: width - margin.right,
       bottom: height - margin.bottom,
-      left: margin.left
+      left: margin.left,
+      width: width - margin.left - margin.right,
+      height: height - margin.top - margin.bottom
     };
-  
-    usableArea.width = usableArea.right - usableArea.left;
-    usableArea.height = usableArea.bottom - usableArea.top;
-  
+    
+    const jitterAmount = 5;
+    
     onMount(async () => {
       data = await d3.csv('/data/titles.csv', d => ({
+        id: d.id,  
         title: d.title,
         release_year: +d.release_year,
         imdb_score: +d.imdb_score
       }));
-  
-      // Filtra dados válidos
-      data = data.filter(d => d.title && !isNaN(d.release_year) && !isNaN(d.imdb_score));
-    });
-  
-    async function dotInteraction(index, evt) {
-        let hoveredDot = evt.target;
-        if (evt.type === "mouseenter") {
-            hoveredMovie = filteredData[index]; // Agora pegando do filtrado
-            cursor = { x: evt.clientX, y: evt.clientY };
-            tooltipPosition = await computePosition(hoveredDot, tooltip, {
-            strategy: "fixed",
-            middleware: [offset(5), autoPlacement()],
-            });
-        } else if (evt.type === "mouseleave") {
-            hoveredMovie = null;
+    
+      data = data.filter(d => d.id && d.title && !isNaN(d.release_year) && !isNaN(d.imdb_score));
+    
+      // Carrega os créditos de atores
+      credits = await d3.csv('/data/credits_actors.csv', d => ({
+        id: d.id,
+        name: d.name,
+        character: d.character
+      }));
+    
+      // Monta a lista de atores
+      actorList = Array.from(new Set(credits.map(d => d.name))).sort();
+    
+      // Monta o mapeamento de ator -> Set de filmes
+      for (const credit of credits) {
+        if (!actorToMovies.has(credit.name)) {
+          actorToMovies.set(credit.name, new Set());
         }
+        actorToMovies.get(credit.name).add(credit.id);
+      }
+    });
+    
+    async function dotInteraction(index, evt) {
+      let hoveredDot = evt.target;
+      if (evt.type === "mouseenter") {
+        hoveredMovie = filteredData[index];
+        cursor = { x: evt.clientX, y: evt.clientY };
+        tooltipPosition = await computePosition(hoveredDot, tooltip, {
+          strategy: "fixed",
+          middleware: [offset(5), autoPlacement()],
+        });
+      } else if (evt.type === "mouseleave") {
+        hoveredMovie = null;
+      }
     }
     
     $: xExtent = d3.extent(data, d => d.release_year);
-    $: yExtent = [0, 10]; // IMDb vai de 0 a 10
-  
+    $: yExtent = [0, 10];
+    
     $: xScale = d3.scaleLinear()
       .domain(xExtent)
       .range([usableArea.left, usableArea.right])
       .nice();
-  
+    
     $: yScale = d3.scaleLinear()
       .domain(yExtent)
       .range([usableArea.bottom, usableArea.top]);
-  
+    
     $: {
       if (xAxis) d3.select(xAxis).call(d3.axisBottom(xScale).tickFormat(d3.format('d')));
       if (yAxis) d3.select(yAxis).call(d3.axisLeft(yScale));
     }
-
-    let searchTerm = "";
-    let filteredData = [];
-
-    // Atualiza o filtro quando searchTerm mudar
-    $: filteredData = data.filter(d => 
-    d.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    
+    // Filtra dinamicamente baseado em searchTerm e selectedActor
+    $: filteredData = data.filter(d => {
+      const matchesTitle = d.title.toLowerCase().includes(searchTerm.toLowerCase());
+    
+      let matchesActor = true;
+      if (selectedActor && actorToMovies.has(selectedActor)) {
+        matchesActor = actorToMovies.get(selectedActor).has(d.id);
+      }
+    
+      return matchesTitle && matchesActor;
+    });
 </script>
-  
+
 <h1>IMDb Scores x Ano de Lançamento</h1>
-  
+
 <dl class="info tooltip" hidden={hoveredMovie === null} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={tooltip}>
-    <dt>Título</dt>
-    <dd>{hoveredMovie?.title}</dd>
-    
-    <dt>Ano</dt>
-    <dd>{hoveredMovie?.release_year}</dd>
-    
-    <dt>IMDb Score</dt>
-    <dd>{hoveredMovie?.imdb_score}</dd>
+  <dt>Título</dt>
+  <dd>{hoveredMovie?.title}</dd>
+  
+  <dt>Ano</dt>
+  <dd>{hoveredMovie?.release_year}</dd>
+  
+  <dt>IMDb Score</dt>
+  <dd>{hoveredMovie?.imdb_score}</dd>
 </dl>
+
+<input
+  type="text"
+  placeholder="Pesquisar atores..."
+  bind:value={selectedActor}
+  list="actors"
+  style="margin-bottom: 20px; padding: 8px; font-size: 16px; width: 300px;"
+/>
+
+<datalist id="actors">
+  {#each actorList as actor}
+    <option value={actor}>{actor}</option>
+  {/each}
+</datalist>
 
 <input
   type="text"
@@ -99,41 +135,41 @@
   bind:value={searchTerm}
   style="margin-bottom: 20px; padding: 8px; font-size: 16px; width: 300px;"
 />
-  
+
 <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgContainer}>
-    <g transform="translate(0, {usableArea.bottom})" bind:this={xAxis} />
-    <g transform="translate({usableArea.left}, 0)" bind:this={yAxis} />
-  
-    <g class="dots">
-        {#each filteredData as d, index }
-            <circle
-            on:mouseenter={evt => dotInteraction(index, evt)}
-            on:mouseleave={evt => dotInteraction(index, evt)}
-            cx={ xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount }
-            cy={ yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount }
-            r="4"
-            fill="steelblue"
-            fill-opacity="0.7"
-            />
-        {/each}
-    </g>
-  
-    <!-- Eixos títulos -->
-    <text
-      x={(usableArea.left + usableArea.right) / 2}
-      y={height - 10}
-      text-anchor="middle"
-      font-size="12"
-    >Ano de Lançamento</text>
-  
-    <text
-      x={-usableArea.top - usableArea.height / 2}
-      y={15}
-      text-anchor="middle"
-      font-size="12"
-      transform="rotate(-90)"
-    >Nota IMDb</text>
+  <g transform="translate(0, {usableArea.bottom})" bind:this={xAxis} />
+  <g transform="translate({usableArea.left}, 0)" bind:this={yAxis} />
+
+  <g class="dots">
+    {#each filteredData as d, index}
+      <circle
+        on:mouseenter={evt => dotInteraction(index, evt)}
+        on:mouseleave={evt => dotInteraction(index, evt)}
+        cx={xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount}
+        cy={yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount}
+        r="4"
+        fill="steelblue"
+        fill-opacity="0.7"
+      />
+    {/each}
+  </g>
+
+  <text
+    x={(usableArea.left + usableArea.right) / 2}
+    y={height - 10}
+    text-anchor="middle"
+    font-size="12"
+  >Ano de Lançamento</text>
+
+  <text
+    x={-usableArea.top - usableArea.height / 2}
+    y={15}
+    text-anchor="middle"
+    font-size="12"
+    transform="rotate(-90)"
+  >Nota IMDb</text>
 </svg>
+
   
 <style>
     svg {
