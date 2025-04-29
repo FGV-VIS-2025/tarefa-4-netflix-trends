@@ -445,3 +445,12 @@
         width: 48%;
     }
 </style>
+
+<!-- Add reset filter button -->
+<div class="chart-controls">
+    <button on:click={() => {
+        clickedAges = [];
+        clickedYears = [];
+        processAllData();
+    }} class="reset-button">Reset All Filters</button>
+</div>

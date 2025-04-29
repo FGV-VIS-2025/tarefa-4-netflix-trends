@@ -8,8 +8,7 @@
     let ageYAxis;
     let yearXAxis;
     let yearYAxis;
-    let ageTooltip;
-    let yearTooltip;
+    let tooltip;
     let data = [];
     let ageData = [];
     let filteredAgeData = [];
@@ -138,6 +137,7 @@
     function ageBarInteraction(index, evt) {
         if (evt.type === 'mouseenter') {
             hoveredAgeIndex = index;
+            cursor = { x: evt.x, y: evt.y };
         } else if (evt.type === 'mouseleave') {
             hoveredAgeIndex = -1;
         } else if(evt.type === "click") {
@@ -158,6 +158,7 @@
     function yearBarInteraction(index, evt) {
         if (evt.type === 'mouseenter') {
             hoveredYearIndex = index;
+            cursor = { x: evt.x, y: evt.y };
         } else if (evt.type === 'mouseleave') {
             hoveredYearIndex = -1;
         } else if(evt.type === "click") {
@@ -173,6 +174,12 @@
             // Update both charts with new filters
             updateCharts();
         }
+    }
+
+    // Updates tooltip position
+    $: {
+        tooltipPosition.x = cursor.x + 10;  // Adjust the tooltip offset (10px from cursor)
+        tooltipPosition.y = cursor.y + 10;
     }
 
     $: hoveredAge = filteredAgeData[hoveredAgeIndex] || {};
@@ -218,115 +225,112 @@
     <div class="chart">
         <h2>Movie Counts by Age Certification</h2>
         
-        <div class="chart-container">
-            <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgContainer1}>
-                <g transform="translate(0, {usableArea.bottom})" bind:this={ageXAxis}/>
-                <g transform="translate({usableArea.left}, 0)" bind:this={ageYAxis}/>
-                
-                <g class="bars">
-                    {#each filteredAgeData as d, index}
-                    <rect 
-                        on:mouseenter={evt => ageBarInteraction(index, evt)}
-                        on:mouseleave={evt => ageBarInteraction(index, evt)}
-                        on:click={evt => ageBarInteraction(index, evt)}
-                        
-                        class:selected={clickedAges.includes(d.age_certification)}
-                        class:filtered={clickedYears.length > 0}
-                        
-                        x={ageXScale(d.age_certification)}
-                        y={ageYScale(d.count)}
-                        width={ageXScale.bandwidth()}
-                        height={usableArea.bottom - ageYScale(d.count)}
-                        fill="steelblue"
-                    />
-                    {/each}
-                </g>
-                    
-                <text
-                    x={(usableArea.left + usableArea.right) / 2}
-                    y={height - 10}
-                    text-anchor="middle"
-                    font-size="12"
-                >Classificação etária</text>
-                
-                <text
-                    x={-usableArea.top - usableArea.height / 2}
-                    y={15}
-                    text-anchor="middle"
-                    font-size="12"
-                    transform="rotate(-90)"
-                >Contagedm de filmes</text>
-            </svg>
+        <dl class="info tooltip" hidden={hoveredAgeIndex === -1} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={tooltip}>
+            <dt>Classificação</dt>
+            <dd>{hoveredAge.age_certification || ''}</dd>
             
-            <div class="fixed-tooltip" class:hidden={hoveredAgeIndex === -1} bind:this={ageTooltip}>
-                <div class="tooltip-content">
-                    <strong>Classificação:</strong> {hoveredAge.age_certification || ''}
-                    <strong>Número de filmes:</strong> {hoveredAge.count || 0}
-                </div>
-            </div>
-        </div>
+            <dt>Numero de filmes</dt>
+            <dd>{hoveredAge.count || 0}</dd>
+        </dl>
+        
+        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgContainer1}>
+            <g transform="translate(0, {usableArea.bottom})" bind:this={ageXAxis}/>
+            <g transform="translate({usableArea.left}, 0)" bind:this={ageYAxis}/>
+            
+            <g class="bars">
+                {#each filteredAgeData as d, index}
+                <rect 
+                    on:mouseenter={evt => ageBarInteraction(index, evt)}
+                    on:mouseleave={evt => ageBarInteraction(index, evt)}
+                    on:click={evt => ageBarInteraction(index, evt)}
+                    
+                    class:selected={clickedAges.includes(d.age_certification)}
+                    class:filtered={clickedYears.length > 0}
+                    
+                    x={ageXScale(d.age_certification)}
+                    y={ageYScale(d.count)}
+                    width={ageXScale.bandwidth()}
+                    height={usableArea.bottom - ageYScale(d.count)}
+                    fill="steelblue"
+                />
+                {/each}
+            </g>
+                
+            <text
+                x={(usableArea.left + usableArea.right) / 2}
+                y={height - 10}
+                text-anchor="middle"
+                font-size="12"
+            >Classificação etária</text>
+            
+            <text
+                x={-usableArea.top - usableArea.height / 2}
+                y={15}
+                text-anchor="middle"
+                font-size="12"
+                transform="rotate(-90)"
+            >Contagedm de filmes</text>
+        </svg>
     </div>
-
+    
     <div class="chart">
         <h2>Movie Counts by Release Year</h2>
         
-        <div class="chart-container">
-            <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgContainer2}>
-                <g transform="translate(0, {usableArea.bottom})" bind:this={yearXAxis}/>
-                <g transform="translate({usableArea.left}, 0)" bind:this={yearYAxis}/>
-                
-                <g class="bars">
-                    {#each filteredYearData as d, index}
-                        <rect 
-                            on:mouseenter={evt => yearBarInteraction(index, evt)}
-                            on:mouseleave={evt => yearBarInteraction(index, evt)}
-                            on:click={evt => yearBarInteraction(index, evt)}
-                            
-                            class:selected={clickedYears.includes(d.release_year)}
-                            class:filtered={clickedAges.length > 0}
-        
-                            x={yearXScale(d.release_year)}
-                            y={yearYScale(d.count)}
-                            width={yearXScale.bandwidth()}
-                            height={usableArea.bottom - yearYScale(d.count)}
-                            fill="steelblue"
-                        />
-                    {/each}
-                </g>
-        
-                <text
-                    x={(usableArea.left + usableArea.right) / 2}
-                    y={height - 10}
-                    text-anchor="middle"
-                    font-size="12"
-                >Release Year</text>
-        
-                <text
-                    x={-usableArea.top - usableArea.height / 2}
-                    y={15}
-                    text-anchor="middle"
-                    font-size="12"
-                    transform="rotate(-90)"
-                >Number of Movies</text>
-            </svg>
+        <dl class="info tooltip" hidden={hoveredYearIndex === -1} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px">
+            <dt>Release Year</dt>
+            <dd>{hoveredYear.release_year || ''}</dd>
             
-            <div class="fixed-tooltip" class:hidden={hoveredYearIndex === -1} bind:this={yearTooltip}>
-                <div class="tooltip-content">
-                    <strong>Release Year:</strong> {hoveredYear.release_year || ''}
-                    <strong>Number of Movies:</strong> {hoveredYear.count || 0}
-                </div>
-            </div>
-        </div>
+            <dt>Number of Movies</dt>
+            <dd>{hoveredYear.count || 0}</dd>
+        </dl>
+        
+        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgContainer2}>
+            <g transform="translate(0, {usableArea.bottom})" bind:this={yearXAxis}/>
+            <g transform="translate({usableArea.left}, 0)" bind:this={yearYAxis}/>
+            
+            <g class="bars">
+                {#each filteredYearData as d, index}
+                    <rect 
+                        on:mouseenter={evt => yearBarInteraction(index, evt)}
+                        on:mouseleave={evt => yearBarInteraction(index, evt)}
+                        on:click={evt => yearBarInteraction(index, evt)}
+                        
+                        class:selected={clickedYears.includes(d.release_year)}
+                        class:filtered={clickedAges.length > 0}
+        
+                        x={yearXScale(d.release_year)}
+                        y={yearYScale(d.count)}
+                        width={yearXScale.bandwidth()}
+                        height={usableArea.bottom - yearYScale(d.count)}
+                        fill="steelblue"
+                    />
+                {/each}
+            </g>
+        
+            <text
+                x={(usableArea.left + usableArea.right) / 2}
+                y={height - 10}
+                text-anchor="middle"
+                font-size="12"
+            >Release Year</text>
+        
+            <text
+                x={-usableArea.top - usableArea.height / 2}
+                y={15}
+                text-anchor="middle"
+                font-size="12"
+                transform="rotate(-90)"
+            >Number of Movies</text>
+        </svg>
     </div>
 </div>
-
 
 <style>
     svg {
         overflow: visible;
         background: white;
         border: 1px solid #ccc;
-        margin-bottom: 0; /* Remove bottom margin as we'll add the tooltip below */
+        margin-bottom: 30px;
     }
     
     rect {
@@ -338,6 +342,37 @@
     rect:hover {
         transform: scale(1.01);
         fill: lightcoral;
+    }
+
+    .info {
+        display: grid;
+        margin: 0;
+        grid-template-columns: 2;
+        background-color: oklch(100% 0% 0 / 80%);
+        box-shadow: 1px 1px 3px 3px gray;
+        border-radius: 5px;
+        backdrop-filter: blur(10px);
+        padding: 10px;
+        position: fixed;
+        top: 1em;
+        left: 1em;
+    
+        &[hidden]:not(:hover, :focus-within) {
+        opacity: 0;
+        visibility: hidden;
+        }
+    }
+    
+    .info dt {
+        grid-column: 1;
+        font-weight: bold;
+        color: var(--border-gray);
+        text-transform: uppercase;
+    }
+    
+    .info dd {
+        grid-column: 2;
+        font-weight: normal;
     }
 
     .selected {
@@ -359,7 +394,6 @@
         display: flex;
         align-items: center;
         margin-top: 30px;
-        margin-bottom: 15px;
     }
     
     h2::after {
@@ -372,13 +406,12 @@
     
     .chart-container {
         position: relative;
-        margin-bottom: 40px;
     }
     
     .reset-button {
         position: absolute;
         right: 0;
-        top: -30px;
+        top: 0;
         background: #f0f0f0;
         border: 1px solid #ccc;
         border-radius: 4px;
@@ -390,51 +423,6 @@
     .reset-button:hover {
         background: #e0e0e0;
     }
-    
-    /* Fixed tooltip styles */
-    .fixed-tooltip {
-        background-color: #f9f9f9;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 8px 12px;
-        margin-top: 10px;
-        text-align: center;
-        transition: opacity 0.3s;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        min-height: 38px;
-    }
-    
-    .fixed-tooltip.hidden {
-        opacity: 0.2;
-    }
-    
-    .fixed-tooltip strong {
-        margin-right: 5px;
-        margin-left: 10px;
-    }
-    
-    .fixed-tooltip strong:first-child {
-        margin-left: 0;
-    }
-    
-    .tooltip-content {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-    
-    /* For smaller screens, stack tooltip content vertically */
-    @media (max-width: 600px) {
-        .tooltip-content {
-            flex-direction: column;
-        }
-        
-        .fixed-tooltip strong {
-            margin-left: 0;
-            margin-right: 0;
-        }
-    }
 
     .content{
         display: flex;
@@ -445,3 +433,12 @@
         width: 48%;
     }
 </style>
+
+<!-- Add reset filter button -->
+<div class="chart-controls">
+    <button on:click={() => {
+        clickedAges = [];
+        clickedYears = [];
+        processAllData();
+    }} class="reset-button">Reset All Filters</button>
+</div>
