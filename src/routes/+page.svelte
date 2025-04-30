@@ -35,6 +35,8 @@
   let filteredYearData = [];
   let totalMoviesAge = 0;
   let totalMoviesYear = 0;
+  let genreList = [];
+  let selectedGenre = "";
   
   // Commons variables
   let width = 800, height = 500;
@@ -58,7 +60,8 @@
       type: d.type,
       release_year: +d.release_year,
       imdb_score: +d.imdb_score,
-      age_certification: d.age_certification
+      age_certification: d.age_certification,
+      genres: d.genres ? JSON.parse(d.genres.replace(/'/g, '"')) : []
     }));
   
     movieData = movieData.filter(d => d.id && d.title && !isNaN(d.release_year) && !isNaN(d.imdb_score));
@@ -72,6 +75,9 @@
   
     // Build actor list
     actorList = Array.from(new Set(credits.map(d => d.name))).sort();
+
+    // Build genre list
+    genreList = Array.from(new Set(movieData.flatMap(d => d.genres))).sort();
   
     // Build actor to movies mapping
     for (const credit of credits) {
@@ -130,7 +136,9 @@
     (d.type === "MOVIE" && showMovies) ||
     (d.type === "SHOW" && showShows);
 
-    return matchesTitle && matchesActor && matchesType;
+    const matchesGenre = !selectedGenre || d.genres.includes(selectedGenre);
+
+    return matchesTitle && matchesActor && matchesType && matchesGenre;
   });
   
   // Bar chart functions
@@ -351,6 +359,21 @@
         bind:value={searchTerm}
         class="filter-input"
       />
+    </div>
+
+    <div class="filter-group">
+      <input
+        type="text"
+        placeholder="Search genres..."
+        bind:value={selectedGenre}
+        list="genres"
+        class="filter-input"
+      />
+      <datalist id="genres">
+        {#each genreList as genre}
+          <option value={genre}>{genre}</option>
+        {/each}
+      </datalist>
     </div>
 
     <label style="margin-right: 15px;">
