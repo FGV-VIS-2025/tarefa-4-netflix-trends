@@ -67,10 +67,11 @@
     movieData = movieData.filter(d => d.id && d.title && !isNaN(d.release_year) && !isNaN(d.imdb_score));
   
     // Load credits data
-    credits = await d3.csv('./data/credits_actors.csv', d => ({
+    credits = await d3.csv('./data/credits.csv', d => ({
       id: d.id,
       name: d.name,
-      character: d.character
+      character: d.character,
+      role: d.role
     }));
   
     // Build actor list
@@ -81,6 +82,7 @@
   
     // Build actor to movies mapping
     for (const credit of credits) {
+      if (credit.role !== "ACTOR") continue; // <-- só inclui atores
       if (!actorToMovies.has(credit.name)) {
         actorToMovies.set(credit.name, new Set());
       }
