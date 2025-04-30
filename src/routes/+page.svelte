@@ -112,7 +112,7 @@
   $: xScale = d3.scaleLinear()
     .domain(xExtent)
     .range([usableArea.left, usableArea.right])
-    .nice();
+
   
   $: yScale = d3.scaleLinear()
     .domain(yExtent)
@@ -339,6 +339,15 @@
     <div class="filter-group">
       <input
         type="text"
+        placeholder="Search movies..."
+        bind:value={searchTerm}
+        class="filter-input"
+      />
+    </div>
+
+    <div class="filter-group">
+      <input
+        type="text"
         placeholder="Search actors..."
         bind:value={selectedActor}
         list="actors"
@@ -350,15 +359,6 @@
           <option value={actor}>{actor}</option>
         {/each}
       </datalist>
-    </div>
-    
-    <div class="filter-group">
-      <input
-        type="text"
-        placeholder="Search movies..."
-        bind:value={searchTerm}
-        class="filter-input"
-      />
     </div>
 
     <div class="filter-group">
