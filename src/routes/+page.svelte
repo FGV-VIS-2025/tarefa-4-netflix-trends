@@ -18,6 +18,7 @@
   let tooltipPosition = { x: 0, y: 0 };
   let showMovies = true;
   let showShows = true;
+  let clickedMovie = null;
   
   // Bar chart variables
   let svgAgeChart;
@@ -106,6 +107,18 @@
     } else if (evt.type === "mouseleave") {
       hoveredMovie = null;
     }
+  }
+
+  function handleDotClick(index) {
+    const movie = filteredData[index];
+    const actors = credits.filter(c => c.id === movie.id && c.role === "ACTOR").map(c => c.name);
+    const directors = credits.filter(c => c.id === movie.id && c.role === "DIRECTOR").map(c => c.name);
+
+    clickedMovie = {
+      ...movie,
+      actors,
+      directors
+    };
   }
   
   $: xExtent = d3.extent(movieData, d => d.release_year);
@@ -399,6 +412,7 @@
         <circle
           on:mouseenter={evt => dotInteraction(index, evt)}
           on:mouseleave={evt => dotInteraction(index, evt)}
+          on:click={() => handleDotClick(index)}
           cx={xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount}
           cy={yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount}
           r="4"
@@ -424,6 +438,18 @@
     >IMDb Score</text>
   </svg>
 </section>
+
+{#if clickedMovie}
+  <div class="movie-popup">
+    <button class="close-btn" on:click={() => clickedMovie = null}>×</button>
+    <h3>{clickedMovie.title}</h3>
+    <p><strong>Year:</strong> {clickedMovie.release_year}</p>
+    <p><strong>IMDb:</strong> {clickedMovie.imdb_score}</p>
+    <p><strong>Directors:</strong> {clickedMovie.directors.join(', ') || 'N/A'}</p>
+    <p><strong>Actors:</strong> {clickedMovie.actors.join(', ') || 'N/A'}</p>
+    <p><strong>Genres:</strong> {clickedMovie.genres.join(', ') || 'N/A'}</p>
+  </div>
+{/if}
 
 <section class="bar-charts-section">
   <div class="chart-controls">
@@ -791,5 +817,34 @@ rect:hover {
   .chart {
     width: 100%;
   }
+}
+
+/* Click Window */
+.movie-popup {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  max-width: 400px;
+  z-index: 999;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.movie-popup h3 {
+  margin-top: 0;
+}
+
+.close-btn {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
 }
 </style>
