@@ -16,6 +16,8 @@
   let hoveredMovie = null;
   let cursor = { x: 0, y: 0 };
   let tooltipPosition = { x: 0, y: 0 };
+  let showMovies = true;
+  let showShows = true;
   
   // Bar chart variables
   let svgAgeChart;
@@ -53,6 +55,7 @@
     movieData = await d3.csv('./data/titles.csv', d => ({
       id: d.id,  
       title: d.title,
+      type: d.type,
       release_year: +d.release_year,
       imdb_score: +d.imdb_score,
       age_certification: d.age_certification
@@ -122,8 +125,12 @@
     if (selectedActor && actorToMovies.has(selectedActor)) {
       matchesActor = actorToMovies.get(selectedActor).has(d.id);
     }
-  
-    return matchesTitle && matchesActor;
+
+    const matchesType = 
+    (d.type === "MOVIE" && showMovies) ||
+    (d.type === "SHOW" && showShows);
+
+    return matchesTitle && matchesActor && matchesType;
   });
   
   // Bar chart functions
@@ -345,6 +352,17 @@
         class="filter-input"
       />
     </div>
+
+    <label style="margin-right: 15px;">
+      <input type="checkbox" bind:checked={showMovies}>
+      Movies
+    </label>
+    
+    <label>
+      <input type="checkbox" bind:checked={showShows}>
+      Shows
+    </label>
+
   </div>
   
   <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgScatter}>
