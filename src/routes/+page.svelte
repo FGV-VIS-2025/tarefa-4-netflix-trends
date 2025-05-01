@@ -62,7 +62,8 @@
       release_year: +d.release_year,
       imdb_score: +d.imdb_score,
       age_certification: d.age_certification,
-      genres: d.genres ? JSON.parse(d.genres.replace(/'/g, '"')) : []
+      genres: d.genres ? JSON.parse(d.genres.replace(/'/g, '"')) : [],
+      description: d.description || "No description available."
     }));
   
     movieData = movieData.filter(d => d.id && d.title && !isNaN(d.release_year) && !isNaN(d.imdb_score));
@@ -441,13 +442,37 @@
 
 {#if clickedMovie}
   <div class="movie-popup">
-    <button class="close-btn" on:click={() => clickedMovie = null}>×</button>
-    <h3>{clickedMovie.title}</h3>
-    <p><strong>Year:</strong> {clickedMovie.release_year}</p>
-    <p><strong>IMDb:</strong> {clickedMovie.imdb_score}</p>
-    <p><strong>Directors:</strong> {clickedMovie.directors.join(', ') || 'N/A'}</p>
-    <p><strong>Actors:</strong> {clickedMovie.actors.join(', ') || 'N/A'}</p>
-    <p><strong>Genres:</strong> {clickedMovie.genres.join(', ') || 'N/A'}</p>
+    <button class="close-btn" on:click={() => clickedMovie = null} title="Close">×</button>
+    <h3>{clickedMovie.title} ({clickedMovie.release_year})</h3>
+    
+    <div class="movie-details">
+      <p><strong>Type:</strong> {clickedMovie.type === "MOVIE" ? "Movie" : "TV Show"}</p>
+      <p><strong>IMDb Score:</strong> {clickedMovie.imdb_score}</p>
+      <p><strong>Age Certification:</strong> {clickedMovie.age_certification || 'N/A'}</p>
+      
+      {#if clickedMovie.directors.length > 0}
+        <p><strong>Director(s):</strong> {clickedMovie.directors.join(', ')}</p>
+      {:else}
+        <p><strong>Director(s):</strong> N/A</p>
+      {/if}
+      
+      {#if clickedMovie.actors.length > 0}
+        <p><strong>Cast:</strong> {clickedMovie.actors.join(', ')}</p>
+      {:else}
+        <p><strong>Cast:</strong> N/A</p>
+      {/if}
+      
+      {#if clickedMovie.genres.length > 0}
+        <p><strong>Genres:</strong> {clickedMovie.genres.join(', ')}</p>
+      {:else}
+        <p><strong>Genres:</strong> N/A</p>
+      {/if}
+      
+      <div class="movie-description">
+        <strong>Description:</strong>
+        <p>{clickedMovie.description}</p>
+      </div>
+    </div>
   </div>
 {/if}
 
@@ -821,30 +846,70 @@ rect:hover {
 
 /* Click Window */
 .movie-popup {
-  position: fixed;
-  top: 20%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  border: 1px solid #ccc;
-  padding: 1rem;
-  max-width: 400px;
-  z-index: 999;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-}
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 1px solid #ccc;
+    padding: 1rem;
+    width: 500px;
+    max-height: 70vh; 
+    overflow-y: auto;
+    z-index: 999;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+  }
 
 .movie-popup h3 {
   margin-top: 0;
+  color: #333;
+  padding-right: 20px;
+}
+
+.movie-popup p {
+  margin: 0.5rem 0;
+  line-height: 1.4;
+}
+
+.movie-popup strong {
+  color: #555;
 }
 
 .close-btn {
   position: absolute;
-  right: 8px;
-  top: 8px;
+  right: 12px;
+  top: 12px;
   background: transparent;
   border: none;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.close-btn:hover {
+  color: #333;
+}
+
+.movie-details {
+  padding: 10px 0;
+}
+
+.movie-description {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.movie-description p {
+  margin-top: 5px;
+  color: #444;
+}
+
 </style>
