@@ -124,13 +124,19 @@
     const directors = credits.filter(c => c.id === movie.id && c.role === "DIRECTOR").map(c => c.name);
 
     if (!clickedMovies.some(m => m.id === movie.id)) {
+      // Posição inicial escalonada
+      const offset = clickedMovies.length * 20;
       clickedMovies = [
         ...clickedMovies,
         {
           ...movie,
           actors,
           directors,
-          id: movie.id
+          id: movie.id,
+          position: {
+            x: Math.min(80 + offset, window.innerWidth - 550), // 550 = largura estimada da janela + margem
+            y: Math.min(80 + (offset / 2), window.innerHeight - 400) // 400 = altura estimada
+          }
         }
       ];
     }
@@ -146,9 +152,7 @@
     offsetX = e.clientX - rect.left;
     offsetY = e.clientY - rect.top;
     
-    // Muda o cursor durante o arraste
     document.body.style.cursor = 'grabbing';
-    document.body.style.userSelect = 'none';
   }
 
   function onDrag(e) {
@@ -156,18 +160,37 @@
     
     e.preventDefault();
     
-    const popup = document.querySelector(`.movie-popup[data-id="${draggedWindow}"]`);
-    if (popup) {
-      popup.style.left = `${e.clientX - offsetX}px`;
-      popup.style.top = `${e.clientY - offsetY}px`;
-      popup.style.transform = 'none'; // Remove o transform anterior
-    }
+    clickedMovies = clickedMovies.map(movie => {
+      if (movie.id === draggedWindow) {
+        let x = e.clientX - offsetX;
+        let y = e.clientY - offsetY;
+        
+        // Limitar à viewport
+        x = Math.max(10, Math.min(x, window.innerWidth - 510)); // 510 = largura da janela + margem
+        y = Math.max(10, Math.min(y, window.innerHeight - (window.innerHeight * 0.7))); // 70vh
+        
+        return {
+          ...movie,
+          position: { x, y }
+        };
+      }
+      return movie;
+    });
   }
 
   function stopDrag() {
     draggedWindow = null;
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
+  }
+
+  function bringToFront(movieId) {
+    let maxZ = Math.max(...clickedMovies.map(m => m.zIndex || 999), 999);
+    
+    clickedMovies = clickedMovies.map(m => ({
+      ...m,
+      zIndex: m.id === movieId ? maxZ + 1 : m.zIndex
+    }));
   }
   
   function closeMovie(movieId) {
@@ -494,10 +517,16 @@
 
 {#each clickedMovies as movie, index (movie.id)}
     <div 
-    class="movie-popup" 
-    data-id={movie.id}
-    style="left: {50 + (index * 20)}%; top: {50 + (index * 10)}%; z-index: {999 + index};"
-    on:mousedown={(e) => startDrag(e, movie.id)}
+      class="movie-popup" 
+      style="
+        left: {movie.position.x}px;
+        top: {movie.position.y}px;
+        z-index: {movie.zIndex || 999};
+      "
+      on:mousedown={(e) => {
+        bringToFront(movie.id);
+        startDrag(e, movie.id);
+      }}
     >
 
     <div class="drag-handle">
@@ -906,22 +935,24 @@ rect:hover {
 
 /* Click Window */
 .movie-popup {
-  position: absolute; /* Mudado de fixed para absolute */
+  position: fixed; /* Mantemos fixed para o posicionamento absoluto */
+  background: white; /* Fundo branco */
+  border: 1px solid #ccc;
+  padding: 1rem;
   width: 500px;
   max-height: 70vh;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  overflow-y: auto;
+  z-index: 999;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  overflow: hidden; /* Para manter o border-radius */
+  border-radius: 8px;
+  /* Removemos qualquer transparência ou transform */
 }
 
+/* Estilo do cabeçalho arrastável */
 .drag-handle {
-  padding: 1rem;
-  padding-bottom: 0.5rem;
   cursor: grab;
-  user-select: none;
-  background: #f8f8f8;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
   border-bottom: 1px solid #eee;
 }
 
@@ -929,11 +960,18 @@ rect:hover {
   cursor: grabbing;
 }
 
+/* Estilo do conteúdo */
 .movie-details {
-  padding: 0 1rem 1rem 1rem;
-  max-height: calc(70vh - 80px);
-  overflow-y: auto;
+  padding: 0.5rem 0;
 }
+
+.movie-description {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #eee;
+}
+
+/* Botão de fechar */
 .close-btn {
   position: absolute;
   right: 12px;
@@ -943,7 +981,6 @@ rect:hover {
   font-size: 1.5rem;
   cursor: pointer;
   color: #666;
-  padding: 0;
   width: 24px;
   height: 24px;
   display: flex;
