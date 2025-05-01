@@ -16,6 +16,9 @@
   let hoveredMovie = null;
   let cursor = { x: 0, y: 0 };
   let tooltipPosition = { x: 0, y: 0 };
+  let showMovies = true;
+  let showShows = true;
+  let clickedMovies = [];
   
   // Bar chart variables
   let svgAgeChart;
@@ -33,6 +36,8 @@
   let filteredYearData = [];
   let totalMoviesAge = 0;
   let totalMoviesYear = 0;
+  let genreList = [];
+  let selectedGenre = "";
   
   // Commons variables
   let width = 800, height = 500;
@@ -53,25 +58,33 @@
     movieData = await d3.csv('./data/titles.csv', d => ({
       id: d.id,  
       title: d.title,
+      type: d.type,
       release_year: +d.release_year,
       imdb_score: +d.imdb_score,
-      age_certification: d.age_certification
+      age_certification: d.age_certification,
+      genres: d.genres ? JSON.parse(d.genres.replace(/'/g, '"')) : [],
+      description: d.description || "No description available."
     }));
   
     movieData = movieData.filter(d => d.id && d.title && !isNaN(d.release_year) && !isNaN(d.imdb_score));
   
     // Load credits data
-    credits = await d3.csv('./data/credits_actors.csv', d => ({
+    credits = await d3.csv('./data/credits.csv', d => ({
       id: d.id,
       name: d.name,
-      character: d.character
+      character: d.character,
+      role: d.role
     }));
   
     // Build actor list
     actorList = Array.from(new Set(credits.map(d => d.name))).sort();
+
+    // Build genre list
+    genreList = Array.from(new Set(movieData.flatMap(d => d.genres))).sort();
   
     // Build actor to movies mapping
     for (const credit of credits) {
+      if (credit.role !== "ACTOR") continue; // <-- só inclui atores
       if (!actorToMovies.has(credit.name)) {
         actorToMovies.set(credit.name, new Set());
       }
@@ -80,6 +93,14 @@
     
     // Process data for bar charts
     processAllData();
+
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', stopDrag);
+    
+    return () => {
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', stopDrag);
+    };
   });
   
   // Scatter plot functions
@@ -96,14 +117,93 @@
       hoveredMovie = null;
     }
   }
+
+  function handleDotClick(index) {
+    const movie = filteredData[index];
+    const actors = credits.filter(c => c.id === movie.id && c.role === "ACTOR").map(c => c.name);
+    const directors = credits.filter(c => c.id === movie.id && c.role === "DIRECTOR").map(c => c.name);
+
+    if (!clickedMovies.some(m => m.id === movie.id)) {
+      // Posição inicial escalonada
+      const offset = clickedMovies.length * 20;
+      clickedMovies = [
+        ...clickedMovies,
+        {
+          ...movie,
+          actors,
+          directors,
+          id: movie.id,
+          position: {
+            x: Math.min(80 + offset, window.innerWidth - 550), // 550 = largura estimada da janela + margem
+            y: Math.min(80 + (offset / 2), window.innerHeight - 400) // 400 = altura estimada
+          }
+        }
+      ];
+    }
+  }
+
+  let draggedWindow = null;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  function startDrag(e, movieId) {
+    draggedWindow = movieId;
+    const rect = e.currentTarget.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    
+    document.body.style.cursor = 'grabbing';
+  }
+
+  function onDrag(e) {
+    if (!draggedWindow) return;
+    
+    e.preventDefault();
+    
+    clickedMovies = clickedMovies.map(movie => {
+      if (movie.id === draggedWindow) {
+        let x = e.clientX - offsetX;
+        let y = e.clientY - offsetY;
+        
+        // Limitar à viewport
+        x = Math.max(10, Math.min(x, window.innerWidth - 510)); // 510 = largura da janela + margem
+        y = Math.max(10, Math.min(y, window.innerHeight - (window.innerHeight * 0.7))); // 70vh
+        
+        return {
+          ...movie,
+          position: { x, y }
+        };
+      }
+      return movie;
+    });
+  }
+
+  function stopDrag() {
+    draggedWindow = null;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+
+  function bringToFront(movieId) {
+    let maxZ = Math.max(...clickedMovies.map(m => m.zIndex || 999), 999);
+    
+    clickedMovies = clickedMovies.map(m => ({
+      ...m,
+      zIndex: m.id === movieId ? maxZ + 1 : m.zIndex
+    }));
+  }
   
+  function closeMovie(movieId) {
+    clickedMovies = clickedMovies.filter(m => m.id !== movieId);
+  }
+
   $: xExtent = d3.extent(movieData, d => d.release_year);
   $: yExtent = [0, 10];
   
   $: xScale = d3.scaleLinear()
     .domain(xExtent)
     .range([usableArea.left, usableArea.right])
-    .nice();
+
   
   $: yScale = d3.scaleLinear()
     .domain(yExtent)
@@ -122,8 +222,14 @@
     if (selectedActor && actorToMovies.has(selectedActor)) {
       matchesActor = actorToMovies.get(selectedActor).has(d.id);
     }
-  
-    return matchesTitle && matchesActor;
+
+    const matchesType = 
+    (d.type === "MOVIE" && showMovies) ||
+    (d.type === "SHOW" && showShows);
+
+    const matchesGenre = !selectedGenre || d.genres.includes(selectedGenre);
+
+    return matchesTitle && matchesActor && matchesType && matchesGenre;
   });
   
   // Bar chart functions
@@ -324,6 +430,15 @@
     <div class="filter-group">
       <input
         type="text"
+        placeholder="Search movies..."
+        bind:value={searchTerm}
+        class="filter-input"
+      />
+    </div>
+
+    <div class="filter-group">
+      <input
+        type="text"
         placeholder="Search actors..."
         bind:value={selectedActor}
         list="actors"
@@ -336,15 +451,32 @@
         {/each}
       </datalist>
     </div>
-    
+
     <div class="filter-group">
       <input
         type="text"
-        placeholder="Search movies..."
-        bind:value={searchTerm}
+        placeholder="Search genres..."
+        bind:value={selectedGenre}
+        list="genres"
         class="filter-input"
       />
+      <datalist id="genres">
+        {#each genreList as genre}
+          <option value={genre}>{genre}</option>
+        {/each}
+      </datalist>
     </div>
+
+    <label style="margin-right: 15px;">
+      <input type="checkbox" bind:checked={showMovies}>
+      Movies
+    </label>
+    
+    <label>
+      <input type="checkbox" bind:checked={showShows}>
+      Shows
+    </label>
+
   </div>
   
   <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgScatter}>
@@ -356,6 +488,7 @@
         <circle
           on:mouseenter={evt => dotInteraction(index, evt)}
           on:mouseleave={evt => dotInteraction(index, evt)}
+          on:click={() => handleDotClick(index)}
           cx={xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount}
           cy={yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount}
           r="4"
@@ -381,6 +514,56 @@
     >IMDb Score</text>
   </svg>
 </section>
+
+{#each clickedMovies as movie, index (movie.id)}
+    <div 
+      class="movie-popup" 
+      style="
+        left: {movie.position.x}px;
+        top: {movie.position.y}px;
+        z-index: {movie.zIndex || 999};
+      "
+      on:mousedown={(e) => {
+        bringToFront(movie.id);
+        startDrag(e, movie.id);
+      }}
+    >
+
+    <div class="drag-handle">
+      <button class="close-btn" on:click={() => closeMovie(movie.id)} title="Close">×</button>
+      <h3>{movie.title} ({movie.release_year})</h3>
+    </div>
+    
+    <div class="movie-details">
+      <p><strong>Type:</strong> {movie.type === "MOVIE" ? "Movie" : "TV Show"}</p>
+      <p><strong>IMDb Score:</strong> {movie.imdb_score}</p>
+      <p><strong>Age Certification:</strong> {movie.age_certification || 'N/A'}</p>
+      
+      {#if movie.directors.length > 0}
+        <p><strong>Director(s):</strong> {movie.directors.join(', ')}</p>
+      {:else}
+        <p><strong>Director(s):</strong> N/A</p>
+      {/if}
+      
+      {#if movie.actors.length > 0}
+        <p><strong>Cast:</strong> {movie.actors.join(', ')}</p>
+      {:else}
+        <p><strong>Cast:</strong> N/A</p>
+      {/if}
+      
+      {#if movie.genres.length > 0}
+        <p><strong>Genres:</strong> {movie.genres.join(', ')}</p>
+      {:else}
+        <p><strong>Genres:</strong> N/A</p>
+      {/if}
+      
+      <div class="movie-description">
+        <strong>Description:</strong>
+        <p>{movie.description}</p>
+      </div>
+    </div>
+  </div>
+{/each}
 
 <section class="bar-charts-section">
   <div class="chart-controls">
@@ -749,4 +932,79 @@ rect:hover {
     width: 100%;
   }
 }
+
+/* Click Window */
+.movie-popup {
+  position: fixed; /* Mantemos fixed para o posicionamento absoluto */
+  background: white; /* Fundo branco */
+  border: 1px solid #ccc;
+  padding: 1rem;
+  width: 500px;
+  max-height: 70vh;
+  overflow-y: auto;
+  z-index: 999;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  /* Removemos qualquer transparência ou transform */
+}
+
+/* Estilo do cabeçalho arrastável */
+.drag-handle {
+  cursor: grab;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Estilo do conteúdo */
+.movie-details {
+  padding: 0.5rem 0;
+}
+
+.movie-description {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #eee;
+}
+
+/* Botão de fechar */
+.close-btn {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.movie-details {
+  padding: 10px 0;
+}
+
+.movie-description {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.movie-description p {
+  margin-top: 5px;
+  color: #444;
+}
+
 </style>
