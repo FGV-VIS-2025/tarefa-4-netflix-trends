@@ -18,7 +18,7 @@
   let tooltipPosition = { x: 0, y: 0 };
   let showMovies = true;
   let showShows = true;
-  let clickedMovie = null;
+  let clickedMovies = [];
   
   // Bar chart variables
   let svgAgeChart;
@@ -93,6 +93,14 @@
     
     // Process data for bar charts
     processAllData();
+
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', stopDrag);
+    
+    return () => {
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', stopDrag);
+    };
   });
   
   // Scatter plot functions
@@ -115,13 +123,57 @@
     const actors = credits.filter(c => c.id === movie.id && c.role === "ACTOR").map(c => c.name);
     const directors = credits.filter(c => c.id === movie.id && c.role === "DIRECTOR").map(c => c.name);
 
-    clickedMovie = {
-      ...movie,
-      actors,
-      directors
-    };
+    if (!clickedMovies.some(m => m.id === movie.id)) {
+      clickedMovies = [
+        ...clickedMovies,
+        {
+          ...movie,
+          actors,
+          directors,
+          id: movie.id
+        }
+      ];
+    }
+  }
+
+  let draggedWindow = null;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  function startDrag(e, movieId) {
+    draggedWindow = movieId;
+    const rect = e.currentTarget.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    
+    // Muda o cursor durante o arraste
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+  }
+
+  function onDrag(e) {
+    if (!draggedWindow) return;
+    
+    e.preventDefault();
+    
+    const popup = document.querySelector(`.movie-popup[data-id="${draggedWindow}"]`);
+    if (popup) {
+      popup.style.left = `${e.clientX - offsetX}px`;
+      popup.style.top = `${e.clientY - offsetY}px`;
+      popup.style.transform = 'none'; // Remove o transform anterior
+    }
+  }
+
+  function stopDrag() {
+    draggedWindow = null;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
   }
   
+  function closeMovie(movieId) {
+    clickedMovies = clickedMovies.filter(m => m.id !== movieId);
+  }
+
   $: xExtent = d3.extent(movieData, d => d.release_year);
   $: yExtent = [0, 10];
   
@@ -440,41 +492,49 @@
   </svg>
 </section>
 
-{#if clickedMovie}
-  <div class="movie-popup">
-    <button class="close-btn" on:click={() => clickedMovie = null} title="Close">×</button>
-    <h3>{clickedMovie.title} ({clickedMovie.release_year})</h3>
+{#each clickedMovies as movie, index (movie.id)}
+    <div 
+    class="movie-popup" 
+    data-id={movie.id}
+    style="left: {50 + (index * 20)}%; top: {50 + (index * 10)}%; z-index: {999 + index};"
+    on:mousedown={(e) => startDrag(e, movie.id)}
+    >
+
+    <div class="drag-handle">
+      <button class="close-btn" on:click={() => closeMovie(movie.id)} title="Close">×</button>
+      <h3>{movie.title} ({movie.release_year})</h3>
+    </div>
     
     <div class="movie-details">
-      <p><strong>Type:</strong> {clickedMovie.type === "MOVIE" ? "Movie" : "TV Show"}</p>
-      <p><strong>IMDb Score:</strong> {clickedMovie.imdb_score}</p>
-      <p><strong>Age Certification:</strong> {clickedMovie.age_certification || 'N/A'}</p>
+      <p><strong>Type:</strong> {movie.type === "MOVIE" ? "Movie" : "TV Show"}</p>
+      <p><strong>IMDb Score:</strong> {movie.imdb_score}</p>
+      <p><strong>Age Certification:</strong> {movie.age_certification || 'N/A'}</p>
       
-      {#if clickedMovie.directors.length > 0}
-        <p><strong>Director(s):</strong> {clickedMovie.directors.join(', ')}</p>
+      {#if movie.directors.length > 0}
+        <p><strong>Director(s):</strong> {movie.directors.join(', ')}</p>
       {:else}
         <p><strong>Director(s):</strong> N/A</p>
       {/if}
       
-      {#if clickedMovie.actors.length > 0}
-        <p><strong>Cast:</strong> {clickedMovie.actors.join(', ')}</p>
+      {#if movie.actors.length > 0}
+        <p><strong>Cast:</strong> {movie.actors.join(', ')}</p>
       {:else}
         <p><strong>Cast:</strong> N/A</p>
       {/if}
       
-      {#if clickedMovie.genres.length > 0}
-        <p><strong>Genres:</strong> {clickedMovie.genres.join(', ')}</p>
+      {#if movie.genres.length > 0}
+        <p><strong>Genres:</strong> {movie.genres.join(', ')}</p>
       {:else}
         <p><strong>Genres:</strong> N/A</p>
       {/if}
       
       <div class="movie-description">
         <strong>Description:</strong>
-        <p>{clickedMovie.description}</p>
+        <p>{movie.description}</p>
       </div>
     </div>
   </div>
-{/if}
+{/each}
 
 <section class="bar-charts-section">
   <div class="chart-controls">
@@ -846,36 +906,34 @@ rect:hover {
 
 /* Click Window */
 .movie-popup {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border: 1px solid #ccc;
-    padding: 1rem;
-    width: 500px;
-    max-height: 70vh; 
-    overflow-y: auto;
-    z-index: 999;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-  }
-
-.movie-popup h3 {
-  margin-top: 0;
-  color: #333;
-  padding-right: 20px;
+  position: absolute; /* Mudado de fixed para absolute */
+  width: 500px;
+  max-height: 70vh;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  overflow: hidden; /* Para manter o border-radius */
 }
 
-.movie-popup p {
-  margin: 0.5rem 0;
-  line-height: 1.4;
+.drag-handle {
+  padding: 1rem;
+  padding-bottom: 0.5rem;
+  cursor: grab;
+  user-select: none;
+  background: #f8f8f8;
+  border-bottom: 1px solid #eee;
 }
 
-.movie-popup strong {
-  color: #555;
+.drag-handle:active {
+  cursor: grabbing;
 }
 
+.movie-details {
+  padding: 0 1rem 1rem 1rem;
+  max-height: calc(70vh - 80px);
+  overflow-y: auto;
+}
 .close-btn {
   position: absolute;
   right: 12px;
