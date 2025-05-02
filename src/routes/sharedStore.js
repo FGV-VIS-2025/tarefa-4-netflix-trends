@@ -27,8 +27,8 @@ function createSharedStore() {
         setMovieData: (data) => {
             movieDataStore.set(data);
             // Initial processing after data is loaded
-            store.processYearData();
-            store.processAgeData();
+            store.processYearData(data);
+            store.processAgeData(data);
         },
         
         // Getter/setter for clickedYears
@@ -37,6 +37,7 @@ function createSharedStore() {
         },
         set clickedYears(years) {
             clickedYearsStore.set(years);
+            store.processAgeData(get(movieDataStore), years)
         },
         
         // Getter/setter for clickedAges
@@ -45,6 +46,7 @@ function createSharedStore() {
         },
         set clickedAges(ages) {
             clickedAgesStore.set(ages);
+            store.processYearData(get(movieDataStore), ages)
         },
         
         // Subscribe to clicked years/ages changes
@@ -52,70 +54,43 @@ function createSharedStore() {
         subscribeToClickedAges: clickedAgesStore.subscribe,
         
         // Process year data with optional age filter
-        processYearData: (ageFilter = null) => {
-            const movieData = get(movieDataStore);
-            
-            if (!movieData || movieData.length === 0) {
-                return; // No data to process yet
-            }
-            
+        processYearData: (dataToProcess, ageFilter = null) => {
+            const data = dataToProcess || get(movieDataStore);
+            if (!data || data.length === 0) return;
+            const filteredData = ageFilter && ageFilter.length > 0
+                ? data.filter(item => ageFilter.includes(item.age_certification))
+                : data;
             const releaseYearCounts = {};
-            
-            // Filter data based on selected age certifications if provided
-            const dataToProcess = ageFilter && ageFilter.length > 0
-                ? movieData.filter(item => ageFilter.includes(item.age_certification))
-                : movieData;
-            
-            dataToProcess.forEach(item => {
+            filteredData.forEach(item => {
                 if (item.release_year) {
                     releaseYearCounts[item.release_year] = (releaseYearCounts[item.release_year] || 0) + 1;
                 }
             });
-            
-            // Convert to array format for D3
             const yearData = Object.entries(releaseYearCounts).map(([release_year, count]) => ({
                 release_year,
                 count: Number(count),
             }));
-            
-            // Update the store with the new data
-            storeData.update(state => ({
-                ...state,
-                yearData
-            }));
+            storeData.update(state => ({ ...state, yearData }));
         },
         
         // Process age data with optional year filter
-        processAgeData: (yearFilter = null) => {
-            const movieData = get(movieDataStore);
-            
-            if (!movieData || movieData.length === 0) {
-                return; // No data to process yet
-            }
-            
+        processAgeData: (dataToProcess, yearFilter = null) => {
+            const data = dataToProcess || get(movieDataStore);
+            if (!data || data.length === 0) return;
+            const filteredData = yearFilter && yearFilter.length > 0
+                ? data.filter(item => yearFilter.includes(item.release_year.toString()))
+                : data;
             const ageCounts = {};
-            
-            const dataToProcess = yearFilter && yearFilter.length > 0
-                ? movieData.filter(item => yearFilter.includes(item.release_year.toString()))
-                : movieData;
-                
-            dataToProcess.forEach(item => {
+            filteredData.forEach(item => {
                 if (item.age_certification) {
                     ageCounts[item.age_certification] = (ageCounts[item.age_certification] || 0) + 1;
                 }
             });
-            
-            // Convert to array format for D3
             const ageData = Object.entries(ageCounts).map(([age_certification, count]) => ({
                 age_certification,
                 count: Number(count),
             }));
-            
-            // Update the store with the new data
-            storeData.update(state => ({
-                ...state,
-                ageData
-            }));
+            storeData.update(state => ({ ...state, ageData }));
         }
     };
     

@@ -231,10 +231,12 @@
     return matchesTitle && matchesActor && matchesType && matchesGenre && matchesYearFilter && matchesAgeFilter;
   });
 
+  // Re-process bar chart data whenever the scatter plot filters change
   $: {
-    sharedStore.setMovieData(filteredData)
+    sharedStore.processYearData(movieData, get(clickedAgesStore));
+    sharedStore.processAgeData(movieData, get(clickedYearsStore));
   }
-  
+
   // --- Function to process shared bar 
   function processAllData() {
     // Process the data for age certification
