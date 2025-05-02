@@ -226,10 +226,10 @@
   // --- Function to process shared bar 
   function processAllData() {
     // Process the data for age certification
-    sharedStore.processAgeAllData();
+    sharedStore.processAgeData();
     
     // Process data for release years
-    sharedStore.processYearAllData();
+    sharedStore.processYearData();
   }
   
 </script>
