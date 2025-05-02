@@ -131,7 +131,7 @@
                     y={ageYScale(d.count)}
                     width={ageXScale.bandwidth()}
                     height={usableArea.bottom - ageYScale(d.count)}
-                    fill="steelblue"
+                    fill=#831010
                 />
             {/each}
             </g>
@@ -227,20 +227,20 @@
     }
     
     rect:hover {
-        fill: lightcoral;
+        fill: #ff0000;
     }
     
     .selected {
-        fill: lightcoral;
+        fill: #ff0000;
     }
     
     .filtered {
-        fill: steelblue;
+        fill: #831010;
         opacity: c.8;
     }
     
     .filtered.selected {
-        fill: lightcoral;
+        fill: #ff0000;
         opacity: 1;
     }
     

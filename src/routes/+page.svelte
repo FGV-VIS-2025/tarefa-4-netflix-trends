@@ -310,6 +310,15 @@
         <g transform="translate(0, {usableArea.bottom})" bind:this={xAxisScatter} />
         <g transform="translate({usableArea.left}, 0)" bind:this={yAxisScatter} />
       
+        <text
+        x={usableArea.left + 5}
+        y={usableArea.top + 15}
+        fill="gray"
+        font-size="14"
+        >
+          Click on a point to show more details
+        </text>
+
         <g class="dots">
           {#each filteredData as d, index}
             <circle
@@ -319,7 +328,7 @@
               cx={xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount}
               cy={yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount}
               r="4"
-              fill="steelblue"
+              fill=#db0000
               fill-opacity="0.7"
             />
           {/each}
@@ -344,6 +353,7 @@
 
     <!-- Seção dos gráficos de barras (lado a lado) -->
     <section class="bar-charts-section">
+
       <div class="bar-charts-grid">
         <BarplotAge 
           width={width * 0.9}
@@ -563,11 +573,13 @@ circle {
   transition: 200ms;
   transform-origin: center;
   transform-box: fill-box;
+  fill:#831010
 }
 
 circle:hover {
   transform: scale(1.2);
-  fill: orange;
+  fill: #ff0000;
+  fill-opacity: 1;
 }
 
 /* TOOLTIP STYLES */

@@ -147,7 +147,7 @@
                     y={yearYScale(d.count)}
                     width={yearXScale.bandwidth()}
                     height={usableArea.bottom - yearYScale(d.count)}
-                    fill="steelblue"
+                    fill=#831010
                 />
             {/each}
             </g>
@@ -244,20 +244,20 @@
     }
     
     rect:hover {
-        fill: lightcoral;
+        fill: #ff0000;
     }
     
     .selected {
-        fill: lightcoral;
+        fill: #ff0000;
     }
     
     .filtered {
-        fill: steelblue;
+        fill: #831010;
         opacity: c.8;
     }
     
     .filtered.selected {
-        fill: lightcoral;
+        fill: #ff0000;
         opacity: 1;
     }
     
