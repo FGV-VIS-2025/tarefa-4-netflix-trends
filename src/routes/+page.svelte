@@ -6,7 +6,8 @@
   // --- Imports for the bar charts ---
   import BarplotAge from './BarplotAge.svelte';
   import BarplotYear from './BarplotYear.svelte';
-  import { sharedStore } from './sharedStore';
+  import { sharedStore, clickedAgesStore, clickedYearsStore } from './sharedStore';
+  import { get } from 'svelte/store';
 
   // Scatter plot variables
   let svgScatter;
@@ -205,6 +206,9 @@
     if (yAxisScatter) d3.select(yAxisScatter).call(d3.axisLeft(yScale));
   }
   
+  $: clickedYears = $clickedYearsStore
+  $: clickedAges = $clickedAgesStore
+
   // Filter by searchTerm and selectedActor
   $: filteredData = movieData.filter(d => {
     const matchesTitle = d.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -220,8 +224,16 @@
 
     const matchesGenre = !selectedGenre || d.genres.includes(selectedGenre);
 
-    return matchesTitle && matchesActor && matchesType && matchesGenre;
+    // Cross-filtering with bar charts
+    const matchesYearFilter = clickedYears.length === 0 || clickedYears.includes(d.release_year.toString());
+    const matchesAgeFilter = clickedAges.length === 0 || clickedAges.includes(d.age_certification);
+
+    return matchesTitle && matchesActor && matchesType && matchesGenre && matchesYearFilter && matchesAgeFilter;
   });
+
+  $: {
+    sharedStore.setMovieData(filteredData)
+  }
   
   // --- Function to process shared bar 
   function processAllData() {

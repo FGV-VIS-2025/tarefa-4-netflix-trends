@@ -1,13 +1,13 @@
 // sharedStore.js
 import { writable, get } from 'svelte/store';
 
+// Stores for clicked items
+export const clickedYearsStore = writable([])
+export const clickedAgesStore = writable([])
+
 function createSharedStore() {
     // Separate writable store for movie data
     const movieDataStore = writable([])
-
-    // Stores for clicked items
-    const clickedYearsStore = writable([])
-    const clickedAgesStore = writable([])
     
     // The core store holds the computed data for components
     const storeData = writable({
