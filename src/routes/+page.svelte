@@ -234,111 +234,145 @@
   
 </script>
 
-<h1>Movie Data Visualization Dashboard</h1>
+<h1>Netflix Movies and TV Shows Data Visualization Dashboard</h1>
 
 <div class="dashboard">
-  <section class="scatter-plot-section">
-    <h2>IMDb Scores by Release Year</h2>
-    
-    <dl class="info tooltip" hidden={hoveredMovie === null} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={tooltipScatter}>
-      <dt>Title</dt>
-      <dd>{hoveredMovie?.title}</dd>
+  <div class="main-grid">
+    <!-- Seção do scatter plot (gráfico principal) -->
+    <section class="scatter-plot-section">
+      <h2>IMDb Scores by Release Year</h2>
       
-      <dt>Year</dt>
-      <dd>{hoveredMovie?.release_year}</dd>
-      
-      <dt>IMDb Score</dt>
-      <dd>{hoveredMovie?.imdb_score}</dd>
-    </dl>
-    
-    <div class="filters">
-      <div class="filter-group">
-        <input
-          type="text"
-          placeholder="Search movies..."
-          bind:value={searchTerm}
-          class="filter-input"
-        />
-      </div>
-
-      <div class="filter-group">
-        <input
-          type="text"
-          placeholder="Search actors..."
-          bind:value={selectedActor}
-          list="actors"
-          class="filter-input"
-        />
+      <dl class="info tooltip" hidden={hoveredMovie === null} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={tooltipScatter}>
+        <dt>Title</dt>
+        <dd>{hoveredMovie?.title}</dd>
         
-        <datalist id="actors">
-          {#each actorList as actor}
-            <option value={actor}>{actor}</option>
-          {/each}
-        </datalist>
-      </div>
-
-      <div class="filter-group">
-        <input
-          type="text"
-          placeholder="Search genres..."
-          bind:value={selectedGenre}
-          list="genres"
-          class="filter-input"
-        />
-        <datalist id="genres">
-          {#each genreList as genre}
-            <option value={genre}>{genre}</option>
-          {/each}
-        </datalist>
-      </div>
-
-      <label style="margin-right: 15px;">
-        <input type="checkbox" bind:checked={showMovies}>
-        Movies
-      </label>
+        <dt>Year</dt>
+        <dd>{hoveredMovie?.release_year}</dd>
+        
+        <dt>IMDb Score</dt>
+        <dd>{hoveredMovie?.imdb_score}</dd>
+      </dl>
       
-      <label>
-        <input type="checkbox" bind:checked={showShows}>
-        Shows
-      </label>
-
-    </div>
-    
-    <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgScatter}>
-      <g transform="translate(0, {usableArea.bottom})" bind:this={xAxisScatter} />
-      <g transform="translate({usableArea.left}, 0)" bind:this={yAxisScatter} />
-    
-      <g class="dots">
-        {#each filteredData as d, index}
-          <circle
-            on:mouseenter={evt => dotInteraction(index, evt)}
-            on:mouseleave={evt => dotInteraction(index, evt)}
-            on:click={() => handleDotClick(index)}
-            cx={xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount}
-            cy={yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount}
-            r="4"
-            fill="steelblue"
-            fill-opacity="0.7"
+      <div class="filters">
+        <!-- Manter os filtros existentes -->
+        <div class="filter-group">
+          <input
+            type="text"
+            placeholder="Search movies..."
+            bind:value={searchTerm}
+            class="filter-input"
           />
-        {/each}
-      </g>
-    
-      <text
-        x={(usableArea.left + usableArea.right) / 2}
-        y={height - 10}
-        text-anchor="middle"
-        font-size="12"
-      >Release Year</text>
-    
-      <text
-        x={-usableArea.top - usableArea.height / 2}
-        y={15}
-        text-anchor="middle"
-        font-size="12"
-        transform="rotate(-90)"
-      >IMDb Score</text>
-    </svg>
-  </section>
+        </div>
+
+        <div class="filter-group">
+          <input
+            type="text"
+            placeholder="Search actors..."
+            bind:value={selectedActor}
+            list="actors"
+            class="filter-input"
+          />
+          
+          <datalist id="actors">
+            {#each actorList as actor}
+              <option value={actor}>{actor}</option>
+            {/each}
+          </datalist>
+        </div>
+
+        <div class="filter-group">
+          <input
+            type="text"
+            placeholder="Search genres..."
+            bind:value={selectedGenre}
+            list="genres"
+            class="filter-input"
+          />
+          <datalist id="genres">
+            {#each genreList as genre}
+              <option value={genre}>{genre}</option>
+            {/each}
+          </datalist>
+        </div>
+
+        <label style="margin-right: 15px;">
+          <input type="checkbox" bind:checked={showMovies}>
+          Movies
+        </label>
+        
+        <label>
+          <input type="checkbox" bind:checked={showShows}>
+          Shows
+        </label>
+      </div>
+      
+      <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgScatter}>
+        <g transform="translate(0, {usableArea.bottom})" bind:this={xAxisScatter} />
+        <g transform="translate({usableArea.left}, 0)" bind:this={yAxisScatter} />
+      
+        <g class="dots">
+          {#each filteredData as d, index}
+            <circle
+              on:mouseenter={evt => dotInteraction(index, evt)}
+              on:mouseleave={evt => dotInteraction(index, evt)}
+              on:click={() => handleDotClick(index)}
+              cx={xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount}
+              cy={yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount}
+              r="4"
+              fill="steelblue"
+              fill-opacity="0.7"
+            />
+          {/each}
+        </g>
+      
+        <text
+          x={(usableArea.left + usableArea.right) / 2}
+          y={height - 10}
+          text-anchor="middle"
+          font-size="12"
+        >Release Year</text>
+      
+        <text
+          x={-usableArea.top - usableArea.height / 2}
+          y={15}
+          text-anchor="middle"
+          font-size="12"
+          transform="rotate(-90)"
+        >IMDb Score</text>
+      </svg>
+    </section>
+
+    <!-- Seção dos gráficos de barras (lado a lado) -->
+    <section class="bar-charts-section">
+      <div class="bar-charts-grid">
+        <BarplotAge 
+          width={width * 0.9}
+          height={height * 0.8}
+          usableArea={{
+            top: 30,
+            right: width * 0.9 - 30,
+            bottom: height * 0.8 - 70,
+            left: 60,
+            width: width * 0.9 - 50 - 30,
+            height: height * 0.8 - 30 - 70
+          }}
+        />
+          
+        <BarplotYear 
+          width={width * 0.9}
+          height={height * 0.8}
+          usableArea={{
+            top: 30,
+            right: width * 0.9 - 30,
+            bottom: height * 0.8 - 70,
+            left: 60,
+            width: width * 0.9 - 50 - 30,
+            height: height * 0.8 - 30 - 70
+          }}
+        />
+      </div>
+    </section>
+  </div>
 
   {#each clickedMovies as movie, index (movie.id)}
       <div 
@@ -390,35 +424,19 @@
     </div>
   {/each}
 
-  <section class="bar-charts-section">
-    <div class="chart-controls">
-      <button on:click={() => {
-          sharedStore.clickedAges = [];
-          sharedStore.clickedYears = [];
-      }} class="reset-button">Reset All Filters</button>
-    </div>
-
-    <div class="charts-container">
-      <BarplotAge 
-        width={width}
-        height={height}
-        usableArea={usableArea}
-      />
-        
-      <BarplotYear 
-        width={width}
-        height={height}
-        usableArea={usableArea}
-      />
-    </div>
-
-  </section>
 </div>
 
 <style>
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
 /* GENERAL STYLES */
 * {
   box-sizing: border-box;
+}
+
+h1, h2, h3 {
+  font-family: 'Bebas Neue', sans-serif;
 }
 
 h1 {
@@ -446,8 +464,20 @@ h2::after {
 }
 
 .dashboard {
-  max-width: 1600px;
+  max-width: 1800px;
   margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* MAIN GRID LAYOUT */
+.main-grid {
+  display: grid;
+  grid-template-areas:
+    "scatter bar1"
+    "scatter bar2";
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 0px;
 }
 
 /* SECTIONS */
@@ -455,8 +485,44 @@ section {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin-bottom: 30px;
+  padding: 5px;
+  margin-bottom: 0px;
+}
+
+/* SCATTER PLOT SECTION */
+.scatter-plot-section {
+  grid-column: 1;
+}
+
+.scatter-plot-section .filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0px;
+  margin-bottom: 00px;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-input {
+  width: 100%;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+/* BAR CHARTS SECTION */
+.bar-charts-section {
+  grid-column: 2;
+}
+
+.bar-charts-grid {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 0px;
 }
 
 /* SVG STYLES */
@@ -470,13 +536,14 @@ svg {
   border-radius: 4px;
 }
 
+
 /* SCATTER PLOT */
 .scatter-plot-section .filters {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 0px;
   flex-wrap: wrap;
-  gap: 15px;
+  gap: 0px;
 }
 
 .filter-group {
@@ -538,13 +605,6 @@ circle:hover {
   padding: 0;
 }
 
-/* BAR CHARTS */
-.charts-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
 /* CONTROLS */
 .chart-controls {
   display: flex;
@@ -566,17 +626,28 @@ circle:hover {
   background: #e0e0e0;
 }
 
-/* RESPONSIVE LAYOUTS */
-@media (max-width: 900px) {
-  .charts-container {
-    flex-direction: column;
+
+/* RESPONSIVE LAYOUT */
+@media (max-width: 1200px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .scatter-plot-section,
+  .bar-charts-section {
+    grid-column: 1;
+  }
+  
+  .bar-charts-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
   }
 }
 
 /* Click Window */
 .movie-popup {
-  position: fixed; /* Mantemos fixed para o posicionamento absoluto */
-  background: white; /* Fundo branco */
+  position: fixed;
+  background: white; 
   border: 1px solid #ccc;
   padding: 1rem;
   width: 500px;

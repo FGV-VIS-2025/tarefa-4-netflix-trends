@@ -8,6 +8,7 @@
     let yearTooltip;
     let hoveredYearIndex = -1;
     let totalMoviesYear = 0;
+    let tooltipPosition = { x: 0, y: 0 };
 
     // Component properties
     export let width = 800, height = 500;
@@ -51,6 +52,17 @@
     function yearBarInteraction(index, evt) {
         if (evt.type === 'mouseenter') {
             hoveredYearIndex = index;
+            
+            // Calcular a posição do tooltip
+            const bar = evt.target;
+            const barRect = bar.getBoundingClientRect();
+            const svgRect = svgYearChart.getBoundingClientRect();
+            
+            tooltipPosition = {
+                x: barRect.left - svgRect.left + barRect.width/2,
+                y: barRect.top - svgRect.top - 10 // 10px acima da barra
+            };
+            
         } else if (evt.type === 'mouseleave') {
             hoveredYearIndex = -1;
         } else if(evt.type === "click") {
@@ -85,9 +97,28 @@
         .domain([0, yearYMax])
         .range([usableArea.bottom, usableArea.top]);
 
-    $:{
-        if (yearXAxis) d3.select(yearXAxis).call(d3.axisBottom(yearXScale));
-        if (yearYAxis) d3.select(yearYAxis).call(d3.axisLeft(yearYScale));
+    $: {
+        if (yearXAxis) {
+            const xAxis = d3.axisBottom(yearXScale)
+                .tickValues(yearXScale.domain().filter((d, i) => i % 2 === 0)) // Mostrar ticks de 2 em 2
+                .tickSizeOuter(0);
+            
+            d3.select(yearXAxis)
+                .call(xAxis)
+                .selectAll("text")
+                .style("font-size", "16px")
+                .attr("transform", "rotate(45)")
+                .attr("text-anchor", "start")
+                .attr("dx", "0.5em")
+                .attr("dy", "0.5em");
+        }
+        
+        if (yearYAxis) {
+            d3.select(yearYAxis)
+                .call(d3.axisLeft(yearYScale))
+                .selectAll("text")
+                .style("font-size", "20px");
+        }
     }
 </script>
 
@@ -125,22 +156,24 @@
             x={(usableArea.left + usableArea.right) / 2}
             y={height - 10}
             text-anchor="middle"
-            font-size="12"
+            font-size="20"
             >Release Year</text>
 
             <text
             x={-usableArea.top - usableArea.height / 2}
             y={15}
             text-anchor="middle"
-            font-size="12"
+            font-size="20"
             transform="rotate(-90)"
             >Number of Movies</text>
         </svg>
         
-        <div class="fixed-tooltip" class:hidden={hoveredYearIndex === -1} bind:this={yearTooltip}>
+        <div class="floating-tooltip" 
+             class:hidden={hoveredYearIndex === -1}
+             style="left: {tooltipPosition.x}px; top: {tooltipPosition.y}px">
             <div class="tooltip-content">
-            <strong>Release Year:</strong> {hoveredYear.release_year || ''}
-            <strong>Movies:</strong> {hoveredYear.count || 0}
+                <strong>Release Year:</strong> {hoveredYear.release_year || ''}
+                <strong>Movies:</strong> {hoveredYear.count || 0}
             </div>
         </div>
         </div>
@@ -158,6 +191,7 @@
         color: #444;
         display: flex;
         align-items: center;
+        font-family: 'Bebas Neue', sans-serif;
     }
     
     h2::after {
@@ -227,20 +261,35 @@
         opacity: 1;
     }
     
-    .fixed-tooltip {
-        background-color: #f9f9f9;
+    .floating-tooltip {
+        position: absolute;
+        background-color: rgba(255, 255, 255, 0.95);
         border: 1px solid #ddd;
         border-radius: 4px;
         padding: 8px 12px;
-        margin-top: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        pointer-events: none;
+        transform: translate(-50%, -100%);
+        z-index: 10;
+        min-width: 120px;
         text-align: center;
-        transition: opacity 0.3s;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        min-height: 38px;
+        transition: opacity 0.2s, visibility 0.2s;
+        font-size: 14px;
     }
     
-    .fixed-tooltip.hidden {
-        opacity: 0.2;
+    .floating-tooltip.hidden {
+        opacity: 0;
+        visibility: hidden;
+    }
+    
+    .tooltip-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .tooltip-content strong {
+        color: #555;
     }
     
     .tooltip-content {
@@ -253,6 +302,11 @@
     
     .tooltip-content strong {
         margin-right: 5px;
+    }
+    
+    /* Aumentar o espaço inferior para acomodar as labels giradas */
+    svg {
+        margin-bottom: 40px;
     }
     
     /* RESPONSIVE LAYOUTS */
