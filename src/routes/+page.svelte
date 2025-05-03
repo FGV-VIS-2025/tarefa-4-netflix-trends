@@ -270,7 +270,7 @@
   
 </script>
 
-<h1>Movie Data Visualization Dashboard</h1>
+<h1>Netflix Titles Data Visualization Dashboard</h1>
 
 <div class="dashboard">
   <div class="up-charts">

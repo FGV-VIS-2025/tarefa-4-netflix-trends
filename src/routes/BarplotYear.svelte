@@ -93,7 +93,13 @@
         .range([usableArea.bottom, usableArea.top]);
 
     $:{
-        if (yearXAxis) d3.select(yearXAxis).call(d3.axisBottom(yearXScale));
+        if (yearXAxis) {
+            d3.select(yearXAxis)
+                .call(d3.axisBottom(yearXScale))
+                .selectAll('text')
+                .style('text-anchor', 'end')
+                .attr('transform', 'rotate(-45)');
+        }
         if (yearYAxis) d3.select(yearYAxis).call(d3.axisLeft(yearYScale));
     }
 </script>
@@ -130,7 +136,7 @@
 
             <text
             x={(usableArea.left + usableArea.right) / 2}
-            y={height - 2}
+            y={height + 10}
             text-anchor="middle"
             font-size="24"
             >Release Year</text>
