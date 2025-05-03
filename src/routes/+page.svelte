@@ -344,6 +344,14 @@
       </div>
       
       <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgScatter}>
+        <text
+          x={usableArea.left + 10} 
+          y={usableArea.top + 20} 
+          font-size="12"
+        >
+          Click on a point to show more details*
+        </text>
+
         <g transform="translate(0, {usableArea.bottom})" bind:this={xAxisScatter} />
         <g transform="translate({usableArea.left}, 0)" bind:this={yAxisScatter} />
       
@@ -431,11 +439,13 @@
   
     <section class="bar-charts-section">
       <div class="chart-controls">
+        <p class="filter-instruction">Click on a bar to apply a filter*</p>
         <button on:click={() => {
             sharedStore.clickedAges = [];
             sharedStore.clickedYears = [];
             sharedStore.clickedScores = [];
-        }} class="reset-button">Reset All Bar Chart Filters</button>
+        }} class="reset-button">Reset All Bar Chart Filters
+        </button>
       </div>
       
       <div class="charts-container">
@@ -613,10 +623,10 @@ circle:hover {
 /* CONTROLS */
 .chart-controls {
   width: 100%;
-  
   display: flex;
-  flex-direction: column;
-  justify-content: start;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .reset-button {
