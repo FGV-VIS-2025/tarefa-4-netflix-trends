@@ -32,8 +32,21 @@ Por fim, há um botão que reseta todos os filtros.
 Acreditamos que o uso do dashboard está intuitivo, mas por conta do número de gráficos em uma mesma visualziação, optamos por um design mais simples para não confundir o usuário, mas que ainda sim lembre a Netflix por meio da peleta de cores. Tentamos distribuir os gráficos de uma forma organizada que proveitasse bem a tela. 
 
 
-## Decisões de Design
+## Desenvolvimento do projeto
 
+### Consideração sobre a escolha dos dados
+A princípio tínhamos escolhido outra base de dados de filmes da netflix. Entretanto, após uma análise mais aprofundada concluímos que ela não era suficiente para cumprir a tarefa. Por isso, buscamos complementar os dados e achamos uma base muito parececida com a anterior com algumas informações a mais, como a nota IMDb que eram muito pertinentes.
+
+### Divisão de tarefas
+Durante todo o projeto estivemos em contato buscando resolver os problemas em conjunto. Como requisito, segue a divisão de tarefas que acabou ocorrendo:
 - Daniel de Miranda Almeida
-
+    - Decisões de design de projeto
+    - Histogramas interativos
+    - Estilização dos gráficos
 - Luís Felipe de Abreu Marciano
+    - Decisões de design de projeto
+    - Scatterplot e filtros de pesquisa
+    - Relatório
+
+### Uso de IA
+A IA foi utilizada como uma ferramenta de suporte no processo de codificação em JavaScript, linguagem na qual não estávamos completamente familiarizados.
