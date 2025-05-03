@@ -328,16 +328,18 @@
             {/each}
           </datalist>
         </div>
-  
-        <label style="margin-right: 15px;">
-          <input type="checkbox" bind:checked={showMovies}>
-          Movies
-        </label>
-        
-        <label>
-          <input type="checkbox" bind:checked={showShows}>
-          Shows
-        </label>
+
+        <div class="checkbox-group">
+          <label>
+            <input type="checkbox" bind:checked={showMovies}>
+            Movies
+          </label>
+          
+          <label>
+            <input type="checkbox" bind:checked={showShows}>
+            Shows
+          </label>
+        </div>
   
       </div>
       
@@ -734,5 +736,11 @@ circle:hover {
 
   justify-content: space-between;
   gap: 10px;
+}
+
+.checkbox-group label {
+  display: block;       
+  margin-bottom: -2px;
+  margin-top: -2px;
 }
 </style>
