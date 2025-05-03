@@ -29,7 +29,7 @@ Além dos gráficos há também filtros de pesquisa e caixas de marcação. Por 
 Por fim, há um botão que reseta todos os filtros.
 
 ### Design
-Acreditamos que o uso do dashboard está intuitivo, mas por conta do número de gráficos em uma mesma visualziação, optamos por um design mais simples para não confundir o usuário, mas que ainda sim lembre a Netflix por meio da peleta de cores. Tentamos distribuir os gráficos de uma forma organizada que proveitasse bem a tela. 
+Acreditamos que o uso do dashboard está intuitivo, mas por conta do número de gráficos em uma mesma visualziação, optamos por um design mais simples para não confundir o usuário, mas que ainda sim lembre a Netflix por meio da peleta de cores. Tentamos distribuir os gráficos de uma forma organizada que proveitasse bem a tela. Uma consideração é que a implementação do cross filtring, a capacidade dos gráficos interagirem entre si, realizando filtros em tempo real que modificam as suas aparências, foi uma das maiores dificuldades do trabalho e também um dos motivos que levou a estilização da nossa página a ser simples.
 
 
 ## Desenvolvimento do projeto
