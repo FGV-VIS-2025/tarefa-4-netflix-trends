@@ -1,13 +1,13 @@
 <script>
     import * as d3 from 'd3';
-    import { sharedStore, clickedAgesStore, clickedYearsStore, clickedScoresStore } from './sharedStore.js';
+    import { sharedStore } from './sharedStore.js';
     import { onMount } from 'svelte';
-    
-    let svgYearChart;
-    let yearXAxis, yearYAxis;
-    let yearTooltip;
-    let hoveredYearIndex = -1;
-    let totalMoviesYear = 0;
+
+    let svgChart;
+    let XAxis, YAxis;
+    let Tooltip;
+    let hoveredIndex = -1;
+    let totalMovies = 0;
 
     // Component properties
     export let width = 800, height = 500;
@@ -21,17 +21,17 @@
     };
 
     // Store data subscriptions
-    let yearData = [];
+    let scoreData = [];
     let clickedAges = [];
     let clickedYears = [];
     let clickedScores = [];
 
     // Subscribe to store changes
     const unsubscribeStore = sharedStore.subscribe(data => {
-        yearData = data.yearData;
+        scoreData = data.scoreData;
         updateTotals();
     });
-
+    
     const unsubscribeClickedAges = sharedStore.subscribeToClickedAges(ages => {
         clickedAges = ages;
     });
@@ -39,11 +39,11 @@
     const unsubscribeClickedYears = sharedStore.subscribeToClickedYears(years => {
         clickedYears = years;
     });
-
+    
     const unsubscribeClickedScores = sharedStore.subscribeToClickedScores(scores => {
         clickedScores = scores;
     });
-
+    
     // Clean up subscriptions when component is destroyed
     onMount(() => {
         return () => {
@@ -54,86 +54,89 @@
         };
     });
 
-    function yearBarInteraction(index, evt) {
+    function scoreBarInteraction(index, evt) {
         if (evt.type === 'mouseenter') {
-            hoveredYearIndex = index;
+            hoveredIndex = index;
         } else if (evt.type === 'mouseleave') {
-            hoveredYearIndex = -1;
+            hoveredIndex = -1;
         } else if(evt.type === "click") {
-            let yearRelease = yearData[index].release_year;
+            let imdbScore = scoreData[index].imdb_score;
             
             // Toggle clicked age
-            if (!clickedYears.includes(yearRelease)) {
-                sharedStore.clickedYears = [...clickedYears, yearRelease];
+            if (!clickedScores.includes(imdbScore)) {
+                sharedStore.clickedScores = [...clickedScores, imdbScore];
             } else {
-                sharedStore.clickedYears = clickedYears.filter(c => c !== yearRelease);
+                sharedStore.clickedScores = clickedScores.filter(c => c !== imdbScore);
             }
         }
     }
 
     function updateTotals() {
-        totalMoviesYear = yearData.reduce((sum, item) => sum + item.count, 0);
+        totalMovies = scoreData.reduce((sum, item) => sum + item.count, 0);
     }
 
-    $: hoveredYear = yearData[hoveredYearIndex] || {};
+    $: hoveredScore = scoreData[hoveredIndex] || {};
+    
+    // Use all possible values for domain to keep axis consistent
+    $: allScores = [...new Set(scoreData.map(d => d.imdb_score))];
 
-    $: allYears = [...new Set(yearData.map(d => d.release_year))];
+    // Use filtered data for the actual bars
+    $: filteredScoreValues = [...new Set(scoreData.map(d => d.imdb_score))];
 
-    $: filteredYearValues = [...new Set(yearData.map(d => d.release_year))];
-
-    $: yearXScale = d3.scaleBand()
-        .domain(allYears)
+    $: XScale = d3.scaleBand()
+        .domain(allScores)
         .range([usableArea.left, usableArea.right])
         .padding(0.1);
 
-    $: yearYMax = Math.max(d3.max(yearData.map(d => d.count)) || 0, d3.max(yearData.map(d => d.count)) || 0);
-    $: yearYScale = d3.scaleLinear()
-        .domain([0, yearYMax])
+    $: YMax = Math.max(d3.max(scoreData.map(d => d.count)) || 0, d3.max(scoreData.map(d => d.count)) || 0);
+    
+    $: YScale = d3.scaleLinear()
+        .domain([0, YMax])
         .range([usableArea.bottom, usableArea.top]);
 
-    $:{
-        if (yearXAxis) d3.select(yearXAxis).call(d3.axisBottom(yearXScale));
-        if (yearYAxis) d3.select(yearYAxis).call(d3.axisLeft(yearYScale));
+    $: {
+        if (XAxis) d3.select(XAxis).call(d3.axisBottom(XScale));
+        if (YAxis) d3.select(YAxis).call(d3.axisLeft(YScale));
     }
 </script>
 
 <div class="chart">
-    <h2>Movies by Release Year</h2>
+    <h2>Movies by IMDb Rating</h2>
     <div class="chart-info">
-        <span class="total-counter">Total Movies: {totalMoviesYear}</span>
+        <span class="total-counter">Total Movies: {totalMovies}</span>
     </div>
+    
+    <div class="chart-container">
+        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgChart}>
+            <g transform="translate(0, {usableArea.bottom})" bind:this={XAxis}/>
+            <g transform="translate({usableArea.left}, 0)" bind:this={YAxis}/>
         
-        <div class="chart-container">
-        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgYearChart}>
-            <g transform="translate(0, {usableArea.bottom})" bind:this={yearXAxis}/>
-            <g transform="translate({usableArea.left}, 0)" bind:this={yearYAxis}/>
-            
             <g class="bars">
-            {#each yearData as d, index}
-                <rect
-                    on:mouseenter={evt => yearBarInteraction(index, evt)}
-                    on:mouseleave={evt => yearBarInteraction(index, evt)}
-                    on:click={evt => yearBarInteraction(index, evt)}
+            {#each scoreData as d, index}
+                <rect 
+                    on:mouseenter={evt => scoreBarInteraction(index, evt)}
+                    on:mouseleave={evt => scoreBarInteraction(index, evt)}
+                    on:click={evt => scoreBarInteraction(index, evt)}
                     
-                    class:selected={clickedYears.includes(d.release_year)}
-                    class:filtered={clickedAges.length > 0 || clickedScores.length > 0}
-
-                    x={yearXScale(d.release_year)}
-                    y={yearYScale(d.count)}
-                    width={yearXScale.bandwidth()}
-                    height={usableArea.bottom - yearYScale(d.count)}
+                    class:selected={clickedScores.includes(d.imdb_score)}
+                    class:filtered={clickedYears.length > 0 || clickedAges.length > 0}
+                    
+                    x={XScale(d.imdb_score)}
+                    y={YScale(d.count)}
+                    width={XScale.bandwidth()}
+                    height={usableArea.bottom - YScale(d.count)}
                     fill="steelblue"
                 />
             {/each}
             </g>
-
+            
             <text
             x={(usableArea.left + usableArea.right) / 2}
             y={height - 10}
             text-anchor="middle"
             font-size="12"
-            >Release Year</text>
-
+            >IMDb Score</text>
+        
             <text
             x={-usableArea.top - usableArea.height / 2}
             y={15}
@@ -142,15 +145,15 @@
             transform="rotate(-90)"
             >Number of Movies</text>
         </svg>
-        
-        <div class="fixed-tooltip" class:hidden={hoveredYearIndex === -1} bind:this={yearTooltip}>
+    
+        <div class="fixed-tooltip" class:hidden={hoveredIndex === -1} bind:this={Tooltip}>
             <div class="tooltip-content">
-            <strong>Release Year:</strong> {hoveredYear.release_year || ''}
-            <strong>Movies:</strong> {hoveredYear.count || 0}
+                <strong>IMDb score:</strong> {hoveredScore.imdb_score || ''}
+                <strong>Movies:</strong> {hoveredScore.count || 0}
             </div>
         </div>
-        </div>
     </div>
+</div>
 
 <style>
     /* GENERAL STYLES */

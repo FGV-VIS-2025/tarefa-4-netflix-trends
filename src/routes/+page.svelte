@@ -6,7 +6,13 @@
   // --- Imports for the bar charts ---
   import BarplotAge from './BarplotAge.svelte';
   import BarplotYear from './BarplotYear.svelte';
-  import { sharedStore, clickedAgesStore, clickedYearsStore } from './sharedStore';
+  import BarplotScore from './BarplotScore.svelte';
+  import {
+    sharedStore,
+    clickedAgesStore,
+    clickedYearsStore,
+    clickedScoresStore
+  } from './sharedStore';
   import { get } from 'svelte/store';
 
   // Scatter plot variables
@@ -208,6 +214,7 @@
   
   $: clickedYears = $clickedYearsStore
   $: clickedAges = $clickedAgesStore
+  $: clickedScores = $clickedScoresStore
 
   // Filter by searchTerm and selectedActor
   $: filteredData = movieData.filter(d => {
@@ -227,14 +234,16 @@
     // Cross-filtering with bar charts
     const matchesYearFilter = clickedYears.length === 0 || clickedYears.includes(d.release_year.toString());
     const matchesAgeFilter = clickedAges.length === 0 || clickedAges.includes(d.age_certification);
+    const matchesScoreFilter = clickedScores.length === 0 || clickedScores.includes(d.imdb_score.toString());
 
-    return matchesTitle && matchesActor && matchesType && matchesGenre && matchesYearFilter && matchesAgeFilter;
+    return matchesTitle && matchesActor && matchesType && matchesGenre && matchesYearFilter && matchesAgeFilter && matchesScoreFilter;
   });
 
   // Re-process bar chart data whenever the scatter plot filters change
   $: {
-    sharedStore.processYearData(movieData, get(clickedAgesStore));
-    sharedStore.processAgeData(movieData, get(clickedYearsStore));
+    sharedStore.processYearData(movieData, $clickedAgesStore, $clickedScoresStore);
+    sharedStore.processAgeData(movieData, $clickedYearsStore, $clickedScoresStore);
+    sharedStore.processScoreData(movieData, $clickedYearsStore, $clickedAgesStore);
   }
 
   // --- Function to process shared bar 
@@ -244,6 +253,9 @@
     
     // Process data for release years
     sharedStore.processYearData();
+    
+    // Process data for imdb score
+    sharedStore.processScoreData();
   }
   
 </script>
@@ -409,6 +421,7 @@
       <button on:click={() => {
           sharedStore.clickedAges = [];
           sharedStore.clickedYears = [];
+          sharedStore.clickedScores = [];
       }} class="reset-button">Reset All Filters</button>
     </div>
 
@@ -420,6 +433,12 @@
       />
         
       <BarplotYear 
+        width={width}
+        height={height}
+        usableArea={usableArea}
+      />
+      
+      <BarplotScore 
         width={width}
         height={height}
         usableArea={usableArea}

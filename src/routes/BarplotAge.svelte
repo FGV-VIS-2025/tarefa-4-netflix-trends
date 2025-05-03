@@ -24,6 +24,7 @@
     let ageData = [];
     let clickedAges = [];
     let clickedYears = [];
+    let clickedScores = [];
 
     // Subscribe to store changes
     const unsubscribeStore = sharedStore.subscribe(data => {
@@ -38,6 +39,10 @@
     const unsubscribeClickedYears = sharedStore.subscribeToClickedYears(years => {
         clickedYears = years;
     });
+
+    const unsubscribeClickedScores = sharedStore.subscribeToClickedScores(scores => {
+        clickedScores = scores;
+    });
     
     // Clean up subscriptions when component is destroyed
     onMount(() => {
@@ -45,6 +50,7 @@
             unsubscribeStore();
             unsubscribeClickedAges();
             unsubscribeClickedYears();
+            unsubscribeClickedScores();
         };
     });
 
@@ -113,7 +119,7 @@
                     on:click={evt => ageBarInteraction(index, evt)}
                     
                     class:selected={clickedAges.includes(d.age_certification)}
-                    class:filtered={clickedYears.length > 0}
+                    class:filtered={clickedYears.length > 0 || clickedScores.length > 0}
                     
                     x={ageXScale(d.age_certification)}
                     y={ageYScale(d.count)}
@@ -183,8 +189,10 @@
     }
     
     .chart {
-        flex: 1;
-        min-width: 300px;
+        width: 45%;
+        
+        /* flex: 1;
+        min-width: 300px; */
     }
     
     .chart-info {
