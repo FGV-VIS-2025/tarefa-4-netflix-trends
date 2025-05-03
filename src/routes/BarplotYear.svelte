@@ -116,9 +116,9 @@
     <h2>Movies by Release Year</h2>
         
         <div class="chart-container">
-        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgYearChart}>
-            <g transform="translate(0, {usableArea.bottom})" bind:this={yearXAxis}/>
-            <g transform="translate({usableArea.left}, 0)" bind:this={yearYAxis}/>
+        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgYearChart} style="background-color: inherit; border: 0">
+            <g transform="translate(0, {usableArea.bottom})" color="#f5f5f1" bind:this={yearXAxis}/>
+            <g transform="translate({usableArea.left}, 0)" color="#f5f5f1" bind:this={yearYAxis}/>
             
             <g class="bars">
             {#each yearData as d, index}
@@ -134,7 +134,6 @@
                     y={yearYScale(d.count)}
                     width={yearXScale.bandwidth()}
                     height={usableArea.bottom - yearYScale(d.count)}
-                    fill="steelblue"
                 />
             {/each}
             </g>
@@ -144,14 +143,16 @@
             y={height + 10}
             text-anchor="middle"
             font-size="24"
+            fill="#f5f5f1"
             >Release Year</text>
-
+            
             <text
             x={-usableArea.top - usableArea.height / 2}
             y={0}
             text-anchor="middle"
             font-size="24"
             transform="rotate(-90)"
+            fill="#f5f5f1"
             >Number of Movies</text>
         </svg>
         
@@ -172,6 +173,7 @@
     /* GENERAL STYLES */
     * {
         box-sizing: border-box;
+        color: #f5f5f1;
     }
     
     h2 {
@@ -206,6 +208,8 @@
     .chart {
         width: 100%;
         height: 100%;
+
+        background-color: #221f1f;
     }
     
     .chart-info {
@@ -226,34 +230,32 @@
     
     .chart-container {
         position: relative;
+        
         height: 90%;
+
+        border: 0;
+        outline: #221f1f;
+        background-color: inherit;
     }
     
     rect {
         transition: 200ms;
         transform-origin: center;
+        fill: #b81d24;
+        opacity: 0.8;
     }
     
     rect:hover {
-        fill: lightcoral;
+        opacity: 0.5;
     }
     
     .selected {
-        fill: lightcoral;
+        fill: #e50914;
     }
     
-    .filtered {
-        fill: steelblue;
-        opacity: c.8;
-    }
-    
-    .filtered.selected {
-        fill: lightcoral;
-        opacity: 1;
-    }
     
     .fixed-tooltip {
-        background-color: #f9f9f9;
+        background-color: #131834;
         border: 1px solid #ddd;
         border-radius: 4px;
         padding: 8px 12px;
@@ -291,8 +293,12 @@
         font-size: 1.2em;
     }
 
-    h2 {
+    h2, text{
         margin: 0;
         margin-bottom: 2px;
+        color: #f5f5f1;
+    }
+    h2::after{
+        color: #f5f5f1;
     }
 </style>

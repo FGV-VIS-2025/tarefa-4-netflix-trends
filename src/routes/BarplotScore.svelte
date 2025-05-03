@@ -13,13 +13,13 @@
     let tooltipY = 0;
 
     // Component properties
-    export let width = 800, height = 500;
+    export let width = 1000, height = 500;
     export let usableArea = {
         top: 30,
         right: 30,
         bottom: 70,
         left: 50,
-        width: 800 - 50 - 30,
+        width: 1000 - 50 - 30,
         height: 500 - 30 - 70
     };
 
@@ -145,9 +145,9 @@
     <h2>Movies by IMDb Rating</h2>
     
     <div class="chart-container">
-        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgChart}>
-            <g transform="translate(0, {usableArea.bottom - 10})" bind:this={XAxis}/>
-            <g transform="translate({usableArea.left + 20}, -10)" bind:this={YAxis}/>
+        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgChart} style="background-color: inherit; border: 0">
+            <g transform="translate(0, {usableArea.bottom - 10})" color="#f5f5f1" bind:this={XAxis}/>
+            <g transform="translate({usableArea.left + 20}, -10)" color="#f5f5f1" bind:this={YAxis}/>
         
             <g class="bars">
             {#each histogramData as bin}
@@ -163,7 +163,6 @@
                     y={YScale(bin.count) - 10}
                     width={XScale(bin.x1) - XScale(bin.x0)}
                     height={usableArea.bottom - YScale(bin.count)}
-                    fill="steelblue"
                 />
             {/each}
             </g>
@@ -173,6 +172,7 @@
             y={height - 5}
             text-anchor="middle"
             font-size="12"
+            fill="#f5f5f1"
             >IMDb Score</text>
         
             <text
@@ -181,6 +181,7 @@
             text-anchor="middle"
             font-size="12"
             transform="rotate(-90)"
+            fill="#f5f5f1"
             >Number of Movies</text>
         </svg>
     
@@ -201,6 +202,7 @@
     /* GENERAL STYLES */
     * {
         box-sizing: border-box;
+        color: #f5f5f1;
     }
     
     h2 {
@@ -235,6 +237,7 @@
     .chart {
         width: 100%;
         height: 45%;
+        background-color: #221f1f;
     }
     
     .chart-info {
@@ -256,34 +259,30 @@
     .chart-container {
         position: relative;
 
-        height: 90%;
+        height: 80%;
+        
+        border: 0;
+        outline: #221f1f;
+        background-color: inherit;
     }
     
     rect {
         transition: 200ms;
         transform-origin: center;
+        fill: #b81d24;
+        opacity: 0.8;
     }
     
     rect:hover {
-        fill: lightcoral;
+        opacity: 0.5;
     }
     
     .selected {
-        fill: lightcoral;
-    }
-    
-    .filtered {
-        fill: steelblue;
-        opacity: c.8;
-    }
-    
-    .filtered.selected {
-        fill: lightcoral;
-        opacity: 1;
+        fill: #e50914;
     }
     
     .fixed-tooltip {
-        background-color: #f9f9f9;
+        background-color: #131834;
         border: 1px solid #ddd;
         border-radius: 4px;
         padding: 8px 12px;
@@ -317,8 +316,12 @@
         }
     }
 
-    h2 {
+    h2{
         margin: 0;
         margin-bottom: 2px;
+        color: #f5f5f1;
+    }
+    h2::after{
+        color: #f5f5f1;
     }
 </style>
