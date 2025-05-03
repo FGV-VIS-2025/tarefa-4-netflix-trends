@@ -143,9 +143,6 @@
 
 <div class="chart">
     <h2>Movies by IMDb Rating</h2>
-    <div class="chart-info">
-        <span class="total-counter">Total Movies: {totalMovies}</span>
-    </div>
     
     <div class="chart-container">
         <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgChart}>

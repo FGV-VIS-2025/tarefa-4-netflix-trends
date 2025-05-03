@@ -114,9 +114,6 @@
 
 <div class="chart">
     <h2>Movies by Release Year</h2>
-    <div class="chart-info">
-        <span class="total-counter">Total Movies: {totalMoviesYear}</span>
-    </div>
         
         <div class="chart-container">
         <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgYearChart}>

@@ -33,6 +33,7 @@
   let clickedMovies = [];
   let genreList = [];
   let selectedGenre = "";
+  let totalTitles;
   
   // All charts variables
   let width = 800, height = 500;
@@ -256,6 +257,8 @@
     sharedStore.processScoreData(movieData, $clickedYearsStore, $clickedAgesStore);
   }
 
+  $: {totalTitles = filteredData.length}
+
   // --- Function to process shared bar 
   function processAllData() {
     // Process the data for age certification
@@ -351,6 +354,41 @@
         >
           Click on a point to show more details*
         </text>
+
+        <rect 
+          class="total-counter-rect"
+          x={usableArea.left + 30}
+          y={usableArea.top + 370}
+          width="140"
+          height="30"
+          fill="url(#grad1)"
+          stroke="#ccc"
+          stroke-width="1"
+          rx="8"
+          ry="8"
+          filter="url(#shadow)"
+        />
+        
+        <text
+          class="total-counter-text"
+          x={usableArea.left + 37}
+          y={usableArea.top + 390}
+          font-size="13"
+          fill="#333"
+          font-weight="bold"
+        >
+          🎬 Total Titles: {totalTitles}
+        </text>
+        <defs>
+          <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#fdfbfb; stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#ebedee; stop-opacity:1" />
+          </linearGradient>
+        
+          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.2)" />
+          </filter>
+        </defs>
 
         <g transform="translate(0, {usableArea.bottom})" bind:this={xAxisScatter} />
         <g transform="translate({usableArea.left}, 0)" bind:this={yAxisScatter} />
@@ -753,4 +791,18 @@ circle:hover {
   margin-bottom: -2px;
   margin-top: -2px;
 }
+
+.total-counter-rect {
+  /* fill: lightgray;  */
+  stroke: #ccc;
+  stroke-width: 1;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+}
+
+.total-counter-text {
+  font-size: 13px;
+  fill: #333;
+  font-weight: bold;
+}
+
 </style>
