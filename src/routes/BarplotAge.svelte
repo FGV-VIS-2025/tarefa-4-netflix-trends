@@ -10,14 +10,8 @@
     let totalMoviesAge = 0;
 
     // Component properties
-    export let width = 800, height = 500;
+    export let width, height;
     export let usableArea = {
-        top: 30,
-        right: 30,
-        bottom: 70,
-        left: 50,
-        width: 800 - 50 - 30,
-        height: 500 - 30 - 70
     };
 
     // Store data subscriptions
@@ -86,7 +80,7 @@
 
     $: ageXScale = d3.scaleBand()
         .domain(allAges)
-        .range([usableArea.left, usableArea.right])
+        .range([usableArea.left + 20, usableArea.right])
         .padding(0.1);
 
     $: ageYMax = Math.max(d3.max(ageData.map(d => d.count)) || 0, d3.max(ageData.map(d => d.count)) || 0);
@@ -109,8 +103,8 @@
     
     <div class="chart-container">
         <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgAgeChart}>
-            <g transform="translate(0, {usableArea.bottom})" bind:this={ageXAxis}/>
-            <g transform="translate({usableArea.left}, 0)" bind:this={ageYAxis}/>
+            <g transform="translate(0, {usableArea.bottom - 10})" bind:this={ageXAxis}/>
+            <g transform="translate({usableArea.left + 20}, -10)" bind:this={ageYAxis}/>
         
             <g class="bars">
             {#each ageData as d, index}
@@ -123,7 +117,7 @@
                     class:filtered={clickedYears.length > 0 || clickedScores.length > 0}
                     
                     x={ageXScale(d.age_certification)}
-                    y={ageYScale(d.count)}
+                    y={ageYScale(d.count) - 10}
                     width={ageXScale.bandwidth()}
                     height={usableArea.bottom - ageYScale(d.count)}
                     fill="steelblue"
@@ -133,7 +127,7 @@
             
             <text
             x={(usableArea.left + usableArea.right) / 2}
-            y={height - 10}
+            y={height - 5}
             text-anchor="middle"
             font-size="12"
             >Age Certification</text>
@@ -187,13 +181,15 @@
         height: auto;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         border-radius: 4px;
+
+        height: 90%;
     }
     
     .chart {
-        width: 45%;
-        
-        /* flex: 1;
-        min-width: 300px; */
+        width: 100%;
+        height: 45%;
+
+        margin-bottom: 15px;
     }
     
     .chart-info {
@@ -214,6 +210,8 @@
     
     .chart-container {
         position: relative;
+
+        height: 90%;
     }
     
     rect {
@@ -272,5 +270,10 @@
         .chart {
             width: 100%;
         }
+    }
+
+    h2 {
+        margin: 0;
+        margin-bottom: 2px;
     }
 </style>

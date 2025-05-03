@@ -10,14 +10,15 @@
     let totalMoviesYear = 0;
 
     // Component properties
-    export let width = 800, height = 500;
-    export let usableArea = {
-        top: 30,
-        right: 30,
-        bottom: 70,
-        left: 50,
-        width: 800 - 50 - 30,
-        height: 500 - 30 - 70
+    export let width = 2200, height = 400;
+    let margin = { top: 20, right: 30, bottom: 50, left: 50 };
+    let usableArea = {
+        top: margin.top,
+        right: width - margin.right,
+        bottom: height - margin.bottom,
+        left: margin.left,
+        width: width - margin.left - margin.right,
+        height: height - margin.top - margin.bottom
     };
 
     // Store data subscriptions
@@ -129,16 +130,16 @@
 
             <text
             x={(usableArea.left + usableArea.right) / 2}
-            y={height - 10}
+            y={height - 2}
             text-anchor="middle"
-            font-size="12"
+            font-size="24"
             >Release Year</text>
 
             <text
             x={-usableArea.top - usableArea.height / 2}
-            y={15}
+            y={0}
             text-anchor="middle"
-            font-size="12"
+            font-size="24"
             transform="rotate(-90)"
             >Number of Movies</text>
         </svg>
@@ -183,13 +184,13 @@
         height: auto;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         border-radius: 4px;
+
+        height: 90%;
     }
     
     .chart {
-        width: 45%;
-        
-        /* flex: 1;
-        min-width: 300px; */
+        width: 100%;
+        height: 100%;
     }
     
     .chart-info {
@@ -210,6 +211,7 @@
     
     .chart-container {
         position: relative;
+        height: 90%;
     }
     
     rect {
@@ -268,5 +270,14 @@
         .chart {
             width: 100%;
         }
+    }
+
+    svg g {
+        font-size: 1.2em;
+    }
+
+    h2 {
+        margin: 0;
+        margin-bottom: 2px;
     }
 </style>

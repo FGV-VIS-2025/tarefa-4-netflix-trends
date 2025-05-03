@@ -119,7 +119,7 @@
     
     $: XScale = d3.scaleLinear()
         .domain([0, 10]) // Domain for the full score range
-        .range([usableArea.left, usableArea.right]);
+        .range([usableArea.left + 20, usableArea.right]);
 
     $: YMax = d3.max(histogramData.map(d => d.count));
     
@@ -141,8 +141,8 @@
     
     <div class="chart-container">
         <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgChart}>
-            <g transform="translate(0, {usableArea.bottom})" bind:this={XAxis}/>
-            <g transform="translate({usableArea.left}, 0)" bind:this={YAxis}/>
+            <g transform="translate(0, {usableArea.bottom - 10})" bind:this={XAxis}/>
+            <g transform="translate({usableArea.left + 20}, -10)" bind:this={YAxis}/>
         
             <g class="bars">
             {#each histogramData as bin}
@@ -155,7 +155,7 @@
                     class:filtered={clickedYears.length > 0 || clickedAges.length > 0}
                     
                     x={XScale(bin.x0)}
-                    y={YScale(bin.count)}
+                    y={YScale(bin.count) - 10}
                     width={XScale(bin.x1) - XScale(bin.x0)}
                     height={usableArea.bottom - YScale(bin.count)}
                     fill="steelblue"
@@ -165,7 +165,7 @@
             
             <text
             x={(usableArea.left + usableArea.right) / 2}
-            y={height - 10}
+            y={height - 5}
             text-anchor="middle"
             font-size="12"
             >IMDb Score</text>
@@ -219,13 +219,13 @@
         height: auto;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         border-radius: 4px;
+
+        height: 90%;
     }
     
     .chart {
-        width: 45%;
-        
-        /* flex: 1;
-        min-width: 300px; */
+        width: 100%;
+        height: 45%;
     }
     
     .chart-info {
@@ -246,6 +246,8 @@
     
     .chart-container {
         position: relative;
+
+        height: 90%;
     }
     
     rect {
@@ -304,5 +306,10 @@
         .chart {
             width: 100%;
         }
+    }
+
+    h2 {
+        margin: 0;
+        margin-bottom: 2px;
     }
 </style>
