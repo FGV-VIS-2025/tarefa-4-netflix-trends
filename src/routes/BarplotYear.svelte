@@ -8,6 +8,8 @@
     let yearTooltip;
     let hoveredYearIndex = -1;
     let totalMoviesYear = 0;
+    let tooltipX = 0;
+    let tooltipY = 0;
 
     // Component properties
     export let width = 2200, height = 400;
@@ -58,12 +60,18 @@
     function yearBarInteraction(index, evt) {
         if (evt.type === 'mouseenter') {
             hoveredYearIndex = index;
+
+            const rect = evt.target.getBoundingClientRect();
+            const containerRect = svgYearChart.getBoundingClientRect();
+
+            tooltipX = rect.x - containerRect.x + rect.width / 2 - yearTooltip.clientWidth / 2;
+            tooltipY = rect.y - containerRect.y - yearTooltip.clientHeight - 20; 
+
         } else if (evt.type === 'mouseleave') {
             hoveredYearIndex = -1;
-        } else if(evt.type === "click") {
+        } else if (evt.type === 'click') {
             let yearRelease = yearData[index].release_year;
             
-            // Toggle clicked age
             if (!clickedYears.includes(yearRelease)) {
                 sharedStore.clickedYears = [...clickedYears, yearRelease];
             } else {
@@ -150,10 +158,14 @@
             >Number of Movies</text>
         </svg>
         
-        <div class="fixed-tooltip" class:hidden={hoveredYearIndex === -1} bind:this={yearTooltip}>
+        <div
+        class="fixed-tooltip"
+        class:hidden={hoveredYearIndex === -1}
+        bind:this={yearTooltip}
+        style={`left: ${tooltipX}px; top: ${tooltipY}px; position: absolute;`}>
             <div class="tooltip-content">
-            <strong>Release Year:</strong> {hoveredYear.release_year || ''}
-            <strong>Movies:</strong> {hoveredYear.count || 0}
+                <strong>Release Year:</strong> {hoveredYear.release_year || ''}
+                <strong>Movies:</strong> {hoveredYear.count || 0}
             </div>
         </div>
         </div>
@@ -256,7 +268,7 @@
     }
     
     .fixed-tooltip.hidden {
-        opacity: 0.2;
+        opacity: 0;
     }
     
     .tooltip-content {

@@ -8,6 +8,8 @@
     let ageTooltip;
     let hoveredAgeIndex = -1;
     let totalMoviesAge = 0;
+    let tooltipX = 0;
+    let tooltipY = 0;
 
     // Component properties
     export let width, height;
@@ -51,6 +53,12 @@
     function ageBarInteraction(index, evt) {
         if (evt.type === 'mouseenter') {
             hoveredAgeIndex = index;
+            const rectElement = evt.currentTarget.getBoundingClientRect();
+            const containerElement = svgAgeChart.getBoundingClientRect();
+
+            tooltipX = rectElement.left + rectElement.width / 2 - containerElement.left;
+            tooltipY = rectElement.top - containerElement.top - 10; 
+
         } else if (evt.type === 'mouseleave') {
             hoveredAgeIndex = -1;
         } else if(evt.type === "click") {
@@ -141,7 +149,12 @@
             >Number of Movies</text>
         </svg>
     
-        <div class="fixed-tooltip" class:hidden={hoveredAgeIndex === -1} bind:this={ageTooltip}>
+        <div 
+        class="fixed-tooltip" 
+        class:hidden={hoveredAgeIndex === -1}
+        bind:this={ageTooltip}
+        style={`position: absolute; left: ${tooltipX}px; top: ${tooltipY}px; transform: translate(-50%, -100%);`}
+        >
             <div class="tooltip-content">
                 <strong>Certification:</strong> {hoveredAge.age_certification || ''}
                 <strong>Movies:</strong> {hoveredAge.count || 0}
@@ -250,7 +263,7 @@
     }
     
     .fixed-tooltip.hidden {
-        opacity: 0.2;
+        opacity: 0;
     }
     
     .tooltip-content {

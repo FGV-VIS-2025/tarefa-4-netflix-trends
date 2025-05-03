@@ -9,6 +9,8 @@
     let Tooltip;
     let hoveredBin = null;
     let totalMovies = 0;
+    let tooltipX = 0;
+    let tooltipY = 0;
 
     // Component properties
     export let width = 800, height = 500;
@@ -82,6 +84,12 @@
     function binInteraction(bin, evt) {
         if (evt.type === 'mouseenter') {
             hoveredBin = bin;
+            const rect = evt.target.getBoundingClientRect();
+            const containerRect = svgChart.getBoundingClientRect();
+
+            tooltipX = rect.x - containerRect.x + rect.width / 2;
+            tooltipY = rect.y - containerRect.y - Tooltip.clientHeight/3 ;
+
         } else if (evt.type === 'mouseleave') {
             hoveredBin = null;
         } else if(evt.type === "click") {
@@ -179,7 +187,11 @@
             >Number of Movies</text>
         </svg>
     
-        <div class="fixed-tooltip" class:hidden={hoveredBin === null} bind:this={Tooltip}>
+        <div
+        class="fixed-tooltip"
+        class:hidden={hoveredBin === null}
+        bind:this={Tooltip}
+        style={`left: ${tooltipX}px; top: ${tooltipY}px; position: absolute; transform: translate(-50%, -100%);`}>
             <div class="tooltip-content">
                 <strong>IMDb score:</strong> {hoveredBinData.x0 || ''}
                 <strong>Movies:</strong> {hoveredBinData.count || 0}
@@ -286,7 +298,7 @@
     }
     
     .fixed-tooltip.hidden {
-        opacity: 0.2;
+        opacity: 0;
     }
     
     .tooltip-content {
