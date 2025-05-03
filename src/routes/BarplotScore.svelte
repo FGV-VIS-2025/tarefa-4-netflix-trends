@@ -2,11 +2,12 @@
     import * as d3 from 'd3';
     import { sharedStore } from './sharedStore.js';
     import { onMount } from 'svelte';
+    import { get } from 'svelte/store';
 
     let svgChart;
     let XAxis, YAxis;
     let Tooltip;
-    let hoveredIndex = -1;
+    let hoveredBin = null;
     let totalMovies = 0;
 
     // Component properties
@@ -21,29 +22,38 @@
     };
 
     // Store data subscriptions
-    let scoreData = [];
+    let rawScoreData = [];
     let clickedAges = [];
     let clickedYears = [];
-    let clickedScores = [];
+    let clickedScoresBins = [];
+    
+    // Histogram parameters
+    const binThresholds = d3.range(0, 10.5, 0.5); // Define bin edges
+    let histogramData = [];
 
     // Subscribe to store changes
     const unsubscribeStore = sharedStore.subscribe(data => {
-        scoreData = data.scoreData;
-        updateTotals();
+        rawScoreData = data.scoreData;
+        updateHistogram();
     });
     
     const unsubscribeClickedAges = sharedStore.subscribeToClickedAges(ages => {
         clickedAges = ages;
+        updateHistogram();
     });
     
     const unsubscribeClickedYears = sharedStore.subscribeToClickedYears(years => {
         clickedYears = years;
+        updateHistogram();
     });
     
-    const unsubscribeClickedScores = sharedStore.subscribeToClickedScores(scores => {
-        clickedScores = scores;
+    const unsubscribeClickedScores = sharedStore.subscribeToClickedScores(() => {
+    // You might want to trigger a re-render or some other action here
+    // if changes to clickedScores from other components should affect this histogram's appearance
+    // For now, since the histogram itself updates clickedScores, this might be empty.
+    // However, it's good practice to subscribe if you anticipate external changes.
     });
-    
+
     // Clean up subscriptions when component is destroyed
     onMount(() => {
         return () => {
@@ -54,48 +64,71 @@
         };
     });
 
-    function scoreBarInteraction(index, evt) {
+    function updateHistogram() {
+        const filteredScores = rawScoreData
+
+        const bins = d3.bin()
+            .domain([0, 10]) // Ensure domain covers the full score range
+            .thresholds(binThresholds)(filteredScores);
+
+        histogramData = bins.map(bin => ({
+            x0: bin.x0,
+            x1: bin.x1,
+            count: bin.length
+        }));
+        updateTotals();
+    }
+
+    function binInteraction(bin, evt) {
         if (evt.type === 'mouseenter') {
-            hoveredIndex = index;
+            hoveredBin = bin;
         } else if (evt.type === 'mouseleave') {
-            hoveredIndex = -1;
+            hoveredBin = null;
         } else if(evt.type === "click") {
-            let imdbScore = scoreData[index].imdb_score;
+            const binRange = `${bin.x0}-${bin.x1}`
             
-            // Toggle clicked age
-            if (!clickedScores.includes(imdbScore)) {
-                sharedStore.clickedScores = [...clickedScores, imdbScore];
+            if (!clickedScoresBins.includes(binRange)) {
+                clickedScoresBins = [...clickedScoresBins, binRange];
             } else {
-                sharedStore.clickedScores = clickedScores.filter(c => c !== imdbScore);
+                clickedScoresBins = clickedScoresBins.filter(b => b !== binRange);
             }
+
+            // Update shared store with the selected score ranges
+            const scoresInBin = rawScoreData
+                .filter(item => item >= bin.x0 && item < bin.x1)
+
+            // Update clickedScores in the store based on the selected bins
+            let allScoresInClickedBins = [];
+            clickedScoresBins.forEach(binRangeStr => {
+                const [start, end] = binRangeStr.split('-').map(Number);
+                const scoresInCurrentBin = rawScoreData
+                    .filter(item => item >= start && item < end)
+                allScoresInClickedBins = [...allScoresInClickedBins, ...scoresInCurrentBin];
+            });
+
+            // Remove duplicates if necessary
+            sharedStore.clickedScores = [...new Set(allScoresInClickedBins)];
         }
     }
 
     function updateTotals() {
-        totalMovies = scoreData.reduce((sum, item) => sum + item.count, 0);
+        totalMovies = histogramData.reduce((sum, item) => sum + item.count, 0);
     }
 
-    $: hoveredScore = scoreData[hoveredIndex] || {};
+    $: hoveredBinData = hoveredBin || {};
     
-    // Use all possible values for domain to keep axis consistent
-    $: allScores = [...new Set(scoreData.map(d => d.imdb_score))];
+    $: XScale = d3.scaleLinear()
+        .domain([0, 10]) // Domain for the full score range
+        .range([usableArea.left, usableArea.right]);
 
-    // Use filtered data for the actual bars
-    $: filteredScoreValues = [...new Set(scoreData.map(d => d.imdb_score))];
-
-    $: XScale = d3.scaleBand()
-        .domain(allScores)
-        .range([usableArea.left, usableArea.right])
-        .padding(0.1);
-
-    $: YMax = Math.max(d3.max(scoreData.map(d => d.count)) || 0, d3.max(scoreData.map(d => d.count)) || 0);
+    $: YMax = d3.max(histogramData.map(d => d.count));
     
     $: YScale = d3.scaleLinear()
         .domain([0, YMax])
         .range([usableArea.bottom, usableArea.top]);
 
     $: {
-        if (XAxis) d3.select(XAxis).call(d3.axisBottom(XScale));
+        if (XAxis) d3.select(XAxis).call(d3.axisBottom(XScale).tickValues(d3.range(0, 11, 1)));
         if (YAxis) d3.select(YAxis).call(d3.axisLeft(YScale));
     }
 </script>
@@ -112,19 +145,19 @@
             <g transform="translate({usableArea.left}, 0)" bind:this={YAxis}/>
         
             <g class="bars">
-            {#each scoreData as d, index}
+            {#each histogramData as bin}
                 <rect 
-                    on:mouseenter={evt => scoreBarInteraction(index, evt)}
-                    on:mouseleave={evt => scoreBarInteraction(index, evt)}
-                    on:click={evt => scoreBarInteraction(index, evt)}
+                    on:mouseenter={evt => binInteraction(bin, evt)}
+                    on:mouseleave={evt => binInteraction(bin, evt)}
+                    on:click={evt => binInteraction(bin, evt)}
                     
-                    class:selected={clickedScores.includes(d.imdb_score)}
+                    class:selected={clickedScoresBins.includes(`${bin.x0}-${bin.x1}`)}
                     class:filtered={clickedYears.length > 0 || clickedAges.length > 0}
                     
-                    x={XScale(d.imdb_score)}
-                    y={YScale(d.count)}
-                    width={XScale.bandwidth()}
-                    height={usableArea.bottom - YScale(d.count)}
+                    x={XScale(bin.x0)}
+                    y={YScale(bin.count)}
+                    width={XScale(bin.x1) - XScale(bin.x0)}
+                    height={usableArea.bottom - YScale(bin.count)}
                     fill="steelblue"
                 />
             {/each}
@@ -146,10 +179,10 @@
             >Number of Movies</text>
         </svg>
     
-        <div class="fixed-tooltip" class:hidden={hoveredIndex === -1} bind:this={Tooltip}>
+        <div class="fixed-tooltip" class:hidden={hoveredBin === null} bind:this={Tooltip}>
             <div class="tooltip-content">
-                <strong>IMDb score:</strong> {hoveredScore.imdb_score || ''}
-                <strong>Movies:</strong> {hoveredScore.count || 0}
+                <strong>IMDb score:</strong> {hoveredBinData.x0 || ''}
+                <strong>Movies:</strong> {hoveredBinData.count || 0}
             </div>
         </div>
     </div>

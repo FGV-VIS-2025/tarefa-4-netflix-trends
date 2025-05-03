@@ -73,7 +73,7 @@ function createSharedStore() {
                 : data;
 
             filteredData = scoreFilter && scoreFilter.length > 0
-                ? filteredData.filter(item => scoreFilter.includes(item.imdb_score.toString()))
+                ? filteredData.filter(item => scoreFilter.includes(item.imdb_score))
                 : filteredData
 
             const releaseYearCounts = {};
@@ -99,7 +99,7 @@ function createSharedStore() {
                 : data;
 
             filteredData = scoreFilter && scoreFilter.length > 0
-                ? filteredData.filter(item => scoreFilter.includes(item.imdb_score.toString()))
+                ? filteredData.filter(item => scoreFilter.includes(item.imdb_score))
                 : filteredData
 
             const ageCounts = {};
@@ -134,10 +134,7 @@ function createSharedStore() {
                     scoreCounts[item.imdb_score] = (scoreCounts[item.imdb_score] || 0) + 1;
                 }
             });
-            const scoreData = Object.entries(scoreCounts).map(([imdb_score, count]) => ({
-                imdb_score,
-                count: Number(count),
-            }));
+            const scoreData = filteredData.map(item => item.imdb_score)
             storeData.update(state => ({ ...state, scoreData }));
         }
     };

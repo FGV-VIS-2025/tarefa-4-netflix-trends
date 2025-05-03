@@ -60,6 +60,7 @@
         } else if (evt.type === 'mouseleave') {
             hoveredAgeIndex = -1;
         } else if(evt.type === "click") {
+            
             let ageCertification = ageData[index].age_certification;
             
             // Toggle clicked age

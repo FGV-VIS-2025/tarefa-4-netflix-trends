@@ -234,7 +234,7 @@
     // Cross-filtering with bar charts
     const matchesYearFilter = clickedYears.length === 0 || clickedYears.includes(d.release_year.toString());
     const matchesAgeFilter = clickedAges.length === 0 || clickedAges.includes(d.age_certification);
-    const matchesScoreFilter = clickedScores.length === 0 || clickedScores.includes(d.imdb_score.toString());
+    const matchesScoreFilter = clickedScores.length === 0 || clickedScores.includes(d.imdb_score);
 
     return matchesTitle && matchesActor && matchesType && matchesGenre && matchesYearFilter && matchesAgeFilter && matchesScoreFilter;
   });
