@@ -15,9 +15,9 @@ Como fonte dos dados utilizamos o dataset [Netflix Movies and TV Shows](https://
 Como nossa ideia era oferecer ao usuário liberdade para explorar os títulos da Netflix, decidimos criar um deshboard que serviria como uma plataforma de exploração para os usuários. Na prática temos um conjunto de gráficos em que o gráfico de dispersão é o principal, trazendo uma relação de Nota IMDb com o ano de lançamento onde cada ponto é um filme/série, e os gráficos de barras são auxiliares, servindo como filtros para aprofundar a possibilidade de análise do usuário. Vamos passar aqui pelas decisões que tivemos durante a construção da visualização.
 
 ### Codificações visuais
-Optamos por utilizar gráficos de dispersão (scatter plot) para mapear as notas do IMDb ao longo do tempo (eixo X = ano de lançamento, eixo Y = nota do IMDb). Essa escolha permite visualizar possíveis tendências de qualidade percebida ao longo das décadas, além de destacar outliers. O gráfico "cru", sem a utilização dos filtros, a percepção de alguma tendência é dificultada pela presença de muitos pontos sobrepostos, há uma grande densidade de pontos que dificulta a análise indiviual de cada filme, mas reflete a predominância de filmes mais recentes na Netflix, bem como notas médias. Esse problema é contornado pelo uso dos filtros, mas ainda sim, sem eles, é possível observar os outliers.
+Optamos por utilizar gráficos de dispersão (scatter plot) para mapear as notas do IMDb ao longo do tempo (eixo X = ano de lançamento, eixo Y = nota do IMDb). Essa escolha permite visualizar possíveis tendências de qualidade percebida ao longo das décadas, além de destacar outliers. O gráfico "cru", sem a utilização dos filtros, a percepção de alguma tendência é dificultada pela presença de muitos pontos sobrepostos. Há uma grande densidade de pontos que dificulta a análise indiviual de cada filme, mas reflete a predominância de filmes mais recentes na Netflix, bem como notas médias. Esse problema é contornado pelo uso dos filtros, mas sem eles ainda sim é possível observar os outliers.
 
-Já nos gráficos auxiliares, optamos por gráficos de barras para representar histogramas, visto que já conhecido que são uma ótima forma de representação. Essa escolha também facilita posterior mente a interatividade com eles, de forma que basta o usuário clicar em uma barra para aplicá-lo a todos os outros gráficos. Nota-se que no histograma dos anos de lançamento tivemos que aplicar uma rotação de 45º nas labels dos ticks para facilitar a leiura.
+Já nos gráficos auxiliares, optamos por gráficos de barras para representar histogramas, visto que já conhecido que são uma ótima forma de representação. Essa escolha também facilita posterior mente a interatividade com eles, de forma que basta o usuário clicar em uma barra para aplicá-lo a todos os outros gráficos. Os histogramas de Age Certification e IMDb Rating possuem layouts muito parecidos e foram posicionados ao lado do scatter plot, que é nosso gráfico central. Já o histograma de Release Year optamos por posicioná-lo abaixo e deixá-lo com o eixo X mais cumprido, visto que são muitos anos de lançamento. Também tivemos que aplicar uma rotação nas labels dos ticks do eixo X nesse gráfico para facilitar a leitura.
 
 ### Interações
 Nosso dashboard possui diversas interações. Começando pelo scatter plot, ao passar o mouse sobre um ponto ele tem uma mudança de cor para destaque e um tooltip aparece mostrando informações relevantes do filme em questão. Se clicar no ponto uma janela arrastável é aberta com ainda mais informações sobre o filme. Varias janelas podem ser abertas ao mesmo tempo e elas continuam até o usuário decidir fechá-las. A inteção por trás dessa implementação é que o usuário possa ir guardando as informações dos filmes que interessarem a ele.
@@ -26,11 +26,10 @@ Nos histogramas, ao passarmos o mouse sobre as barras também há uma mudança d
 
 Além dos gráficos há também filtros de pesquisa e caixas de marcação. Por meio desses campos o usuário pode filtrar todos os gráficos da forma que preferir. Os campos são nome do filme, onde o usuário pode pesquisar por palavras que aparecem nos títulos dos filmes, nome de ator, para filtrar por filmes em que o ator trabalha, e genero. Há também duas caixas para marcação que o usuário pode escolher se quer ver dados de filmes, séries ou ambos.
 
-Por fim, há um botão que reseta todos os filtros.
+Por fim, foram posicinadas anotações instruindo o usuário a utilizar os filtros. Há também um botão que reseta todos os filtros dos gráficos de barras para que o usuário não tenha o trabalho de clicar novamente em todas as barras que ele clicou antes.
 
 ### Design
-Acreditamos que o uso do dashboard está intuitivo, mas por conta do número de gráficos em uma mesma visualziação, optamos por um design mais simples para não confundir o usuário, mas que ainda sim lembre a Netflix por meio da peleta de cores. Tentamos distribuir os gráficos de uma forma organizada que proveitasse bem a tela. Uma consideração é que a implementação do cross filtring, a capacidade dos gráficos interagirem entre si, realizando filtros em tempo real que modificam as suas aparências, foi uma das maiores dificuldades do trabalho e também um dos motivos que levou a estilização da nossa página a ser simples.
-
+Acreditamos que o uso do dashboard está intuitivo, mas por conta do número de gráficos em uma mesma visualziação, optamos por um design mais simples para não confundir o usuário, mas que ainda sim lembre o design da Netflix por meio da peleta de cores. Tentamos distribuir os gráficos de uma forma organizada que proveitasse bem a tela. Uma consideração é que a implementação do cross filtring, a capacidade dos gráficos interagirem entre si, realizando filtros em tempo real que modificam as suas aparências, foi uma das maiores dificuldades do trabalho e também um dos motivos que levou a estilização da nossa página a ser simples.
 
 ## Desenvolvimento do projeto
 
@@ -38,7 +37,7 @@ Acreditamos que o uso do dashboard está intuitivo, mas por conta do número de 
 A princípio tínhamos escolhido outra base de dados de filmes da netflix. Entretanto, após uma análise mais aprofundada concluímos que ela não era suficiente para cumprir a tarefa. Por isso, buscamos complementar os dados e achamos uma base muito parececida com a anterior com algumas informações a mais, como a nota IMDb que eram muito pertinentes.
 
 ### Divisão de tarefas
-Durante todo o projeto estivemos em contato buscando resolver os problemas em conjunto. Como requisito, segue a divisão de tarefas que acabou ocorrendo:
+Durante todo o projeto estivemos em contato buscando resolver os problemas em conjunto e ambos tiveram contribuições em todas as partes descritas abaixo, mas, como requisito, segue a divisão de frentes de trabalho que foi feita:
 - Daniel de Miranda Almeida
     - Decisões de design de projeto
     - Histogramas interativos
