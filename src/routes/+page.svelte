@@ -788,7 +788,6 @@ circle:hover {
   margin-top: -2px;
 }
 
-<<<<<<< HEAD
 .total-counter-rect {
   /* fill: lightgray;  */
   stroke: #ccc;
@@ -802,7 +801,6 @@ circle:hover {
   font-weight: bold;
 }
 
-=======
 dl {
   background-color: inherit;
 }
@@ -825,5 +823,4 @@ dl {
 h2 {
   color: #f5f5f1;
 }
->>>>>>> 656128c (netflix-like styling)
 </style>
