@@ -7,7 +7,6 @@
     let yearXAxis, yearYAxis;
     let yearTooltip;
     let hoveredYearIndex = -1;
-    let totalMoviesYear = 0;
     let tooltipX = 0;
     let tooltipY = 0;
 
@@ -32,7 +31,6 @@
     // Subscribe to store changes
     const unsubscribeStore = sharedStore.subscribe(data => {
         yearData = data.yearData;
-        updateTotals();
     });
 
     const unsubscribeClickedAges = sharedStore.subscribeToClickedAges(ages => {
@@ -80,15 +78,9 @@
         }
     }
 
-    function updateTotals() {
-        totalMoviesYear = yearData.reduce((sum, item) => sum + item.count, 0);
-    }
-
     $: hoveredYear = yearData[hoveredYearIndex] || {};
 
     $: allYears = [...new Set(yearData.map(d => d.release_year))];
-
-    $: filteredYearValues = [...new Set(yearData.map(d => d.release_year))];
 
     $: yearXScale = d3.scaleBand()
         .domain(allYears)
@@ -117,8 +109,8 @@
         
         <div class="chart-container">
         <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgYearChart} style="background-color: inherit; border: 0">
-            <g transform="translate(0, {usableArea.bottom})" color="#f5f5f1" bind:this={yearXAxis}/>
-            <g transform="translate({usableArea.left}, 0)" color="#f5f5f1" bind:this={yearYAxis}/>
+            <g transform="translate(0, {usableArea.bottom})" color="#f5f5f1" bind:this={yearXAxis} style="font-size: 1.25em"/>
+            <g transform="translate({usableArea.left}, 0)" color="#f5f5f1" bind:this={yearYAxis} style="font-size: 1.25em"/>
             
             <g class="bars">
             {#each yearData as d, index}
@@ -140,7 +132,7 @@
 
             <text
             x={(usableArea.left + usableArea.right) / 2}
-            y={height + 10}
+            y={height + 20}
             text-anchor="middle"
             font-size="24"
             fill="#f5f5f1"
@@ -148,7 +140,7 @@
             
             <text
             x={-usableArea.top - usableArea.height / 2}
-            y={0}
+            y={-10}
             text-anchor="middle"
             font-size="24"
             transform="rotate(-90)"
@@ -212,22 +204,6 @@
         background-color: #221f1f;
     }
     
-    .chart-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    
-    .total-counter {
-        background-color: #f0f0f0;
-        padding: 5px 10px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
-        font-weight: bold;
-        font-size: 14px;
-    }
-    
     .chart-container {
         position: relative;
         
@@ -242,7 +218,6 @@
         transition: 200ms;
         transform-origin: center;
         fill: #b81d24;
-        opacity: 0.8;
     }
     
     rect:hover {
@@ -250,9 +225,8 @@
     }
     
     .selected {
-        fill: #e50914;
+        fill: #3a4749;
     }
-    
     
     .fixed-tooltip {
         background-color: #131834;

@@ -37,7 +37,7 @@
   
   // All charts variables
   let width = 800, height = 400;
-  let widthAgeScores = 600, heightAgeScores = 250;
+  let widthAgeScores = 800, heightAgeScores = 250;
   let margin = { top: 20, right: 30, bottom: 50, left: 50 };
   let marginAgeScores = { top: 10, right: 15, bottom: 25, left: 25 };
   let usableArea = {
@@ -351,14 +351,14 @@
           <text
             x={usableArea.left + 10} 
             y={usableArea.top + 20} 
-            font-size="12"
+            font-size="16"
             fill="#f5f5f1"
           >
             Click on a point to show more details*
           </text>
   
-          <g transform="translate(0, {usableArea.bottom})" color="#f5f5f1" bind:this={xAxisScatter} />
-          <g transform="translate({usableArea.left}, 0)" color="#f5f5f1" bind:this={yAxisScatter} />
+          <g transform="translate(0, {usableArea.bottom})" color="#f5f5f1" bind:this={xAxisScatter} style="font-size: 0.75em" />
+          <g transform="translate({usableArea.left}, 0)" color="#f5f5f1" bind:this={yAxisScatter} style="font-size: 0.75em" />
         
           <g class="dots">
             {#each filteredData as d, index}
@@ -379,7 +379,7 @@
           x={(usableArea.left + usableArea.right) / 2}
           y={height - 10}
           text-anchor="middle"
-          font-size="12"
+          font-size="16"
           fill="#f5f5f1"
           >Release Year</text>
           
@@ -387,7 +387,7 @@
           x={-usableArea.top - usableArea.height / 2}
           y={15}
           text-anchor="middle"
-          font-size="12"
+          font-size="16"
           transform="rotate(-90)"
           fill="#f5f5f1"
           >IMDb Score</text>
