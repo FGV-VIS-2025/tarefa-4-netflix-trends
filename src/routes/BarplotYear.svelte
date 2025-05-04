@@ -116,7 +116,7 @@
     <h2>Movies by Release Year</h2>
         
         <div class="chart-container">
-        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgYearChart} style="background-color: inherit; border: 0">
+        <svg viewBox={`0 0 ${width } ${height}`} bind:this={svgYearChart} style="background-color: inherit; border: 0">
             <g transform="translate(0, {usableArea.bottom})" color="#f5f5f1" bind:this={yearXAxis}/>
             <g transform="translate({usableArea.left}, 0)" color="#f5f5f1" bind:this={yearYAxis}/>
             

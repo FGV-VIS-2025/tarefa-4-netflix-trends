@@ -136,8 +136,8 @@
         .range([usableArea.bottom, usableArea.top]);
 
     $: {
-        if (XAxis) d3.select(XAxis).call(d3.axisBottom(XScale).tickValues(d3.range(0, 11, 1)));
-        if (YAxis) d3.select(YAxis).call(d3.axisLeft(YScale));
+        if (XAxis) d3.select(XAxis).call(d3.axisBottom(XScale).tickValues(d3.range(0, 11, 1))).style("font-size", "14px");
+        if (YAxis) d3.select(YAxis).call(d3.axisLeft(YScale)).style("font-size", "14px");
     }
 </script>
 
@@ -169,17 +169,17 @@
             
             <text
             x={(usableArea.left + usableArea.right) / 2}
-            y={height - 5}
+            y={height + 30}
             text-anchor="middle"
-            font-size="12"
+            font-size="18"
             fill="#f5f5f1"
             >IMDb Score</text>
         
             <text
             x={-usableArea.top - usableArea.height / 2}
-            y={15}
+            y={8}
             text-anchor="middle"
-            font-size="12"
+            font-size="18"
             transform="rotate(-90)"
             fill="#f5f5f1"
             >Number of Movies</text>

@@ -98,8 +98,8 @@
         .range([usableArea.bottom, usableArea.top]);
 
     $: {
-        if (ageXAxis) d3.select(ageXAxis).call(d3.axisBottom(ageXScale));
-        if (ageYAxis) d3.select(ageYAxis).call(d3.axisLeft(ageYScale));
+        if (ageXAxis) d3.select(ageXAxis).call(d3.axisBottom(ageXScale)).style("font-size", "14px");
+        if (ageYAxis) d3.select(ageYAxis).call(d3.axisLeft(ageYScale)).style("font-size", "14px");
     }
 </script>
 
@@ -131,17 +131,17 @@
             
             <text
             x={(usableArea.left + usableArea.right) / 2}
-            y={height - 5}
+            y={height + 30}
             text-anchor="middle"
-            font-size="12"
+            font-size="18"
             fill="#f5f5f1"
             >Age Certification</text>
         
             <text
             x={-usableArea.top - usableArea.height / 2}
-            y={15}
+            y={8}
             text-anchor="middle"
-            font-size="12"
+            font-size="18"
             transform="rotate(-90)"
             fill="#f5f5f1"
             >Number of Movies</text>

@@ -39,7 +39,7 @@
   let width = 800, height = 400;
   let widthAgeScores = 600, heightAgeScores = 250;
   let margin = { top: 20, right: 30, bottom: 50, left: 50 };
-  let marginAgeScores = { top: 10, right: 15, bottom: 25, left: 25 };
+  let marginAgeScores = { top: 20, right: 15, bottom: 0, left: 25 };
   let usableArea = {
     top: margin.top,
     right: width - margin.right,
@@ -482,7 +482,7 @@
         
         <div class="charts-container">
           <BarplotAge 
-            width={widthAgeScores}
+            width={widthAgeScores }
             height={heightAgeScores}
             usableArea={usableAreaAgeScores}
           />
