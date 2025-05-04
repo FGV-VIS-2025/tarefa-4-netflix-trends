@@ -356,6 +356,31 @@
           >
             Click on a point to show more details*
           </text>
+
+          <rect 
+            class="total-counter-rect"
+            x={usableArea.left + 30}
+            y={usableArea.top + 260}
+            width="140"
+            height="30"
+            fill="url(#grad1)"
+            stroke="#ccc"
+            stroke-width="1"
+            rx="8"
+            ry="8"
+            filter="url(#shadow)"
+          />
+          
+          <text
+            class="total-counter-text"
+            x={usableArea.left + 35}
+            y={usableArea.top + 280}
+            font-size="13"
+            fill="#f5f5f1"
+            font-weight="bold"
+          >
+            🎬 Total Titles: {totalTitles}
+          </text>
   
           <g transform="translate(0, {usableArea.bottom})" color="#f5f5f1" bind:this={xAxisScatter} />
           <g transform="translate({usableArea.left}, 0)" color="#f5f5f1" bind:this={yAxisScatter} />
@@ -790,14 +815,14 @@ circle:hover {
 
 .total-counter-rect {
   /* fill: lightgray;  */
-  stroke: #ccc;
-  stroke-width: 1;
+  stroke-width: 0;
   filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+  fill: #b81d24;
 }
 
 .total-counter-text {
   font-size: 13px;
-  fill: #333;
+  fill: "#f5f5f1";
   font-weight: bold;
 }
 
