@@ -72,7 +72,7 @@
       description: d.description || "No description available."
     }));
   
-    movieData = movieData.filter(d => d.id && d.title && !isNaN(d.release_year) && !isNaN(d.imdb_score));
+    movieData = movieData.filter(d => d.id && d.title && !isNaN(d.release_year) && !isNaN(d.imdb_score) && !(d.age_certification === ''));
   
     // Setting shared movie data between bar charts
     sharedStore.setMovieData(movieData)
@@ -394,7 +394,7 @@
                 cx={xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount}
                 cy={yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount}
                 r="4"
-                fill="#b81d24"
+                fill={sharedStore.getColorForAge(d.age_certification)}
                 fill-opacity="0.7"
                 />
                 {/each}

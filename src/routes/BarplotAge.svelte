@@ -24,6 +24,7 @@
     // Subscribe to store changes
     const unsubscribeStore = sharedStore.subscribe(data => {
         ageData = data.ageData;
+        console.log("ageData", ageData)
     });
     
     const unsubscribeClickedAges = sharedStore.subscribeToClickedAges(ages => {
@@ -72,18 +73,41 @@
         }
     }
 
+    // --- Adding coloring to plot ---
+    // Age certification color scheme - this will be consistent for other plots
+    const ageCertificationColors = {
+        'R': '#006400',       // Dark green
+        'PG': '#377EB8',      // Blue
+        'TV-14': '#4DAF4A',   // Green
+        'PG-13': '#984EA3',   // Purple
+        'TV-MA': '#FF7F00',   // Orange
+        'TV-PG': '#FFFF33',   // Yellow
+        'TV-Y': '#A65628',    // Brown
+        'TV-G': '#F781BF',    // Pink
+        'TV-Y7': '#999999',   // Gray
+        'G': '#66C2A5',       // Teal
+        'NC-17': '#FC8D62'    // Coral
+    };
+
+    // Get color for a given age certification
+    function getColorForAge(ageCertification) {
+        return ageCertificationColors[ageCertification] || '#777777'; // Default gray for unknown values
+    }
+
     // --- Fixing the age order in the x axis ---
-    const fixedAgeOrder = ['R',
-    'PG',
-    'TV-14',
-    'PG-13',
-    'TV-MA',
-    'TV-PG',
-    'TV-Y',
-    'TV-G',
-    'TV-Y7',
-    'G',
-    'NC-17']
+    const fixedAgeOrder = [
+        'R',
+        'PG',
+        'TV-14',
+        'PG-13',
+        'TV-MA',
+        'TV-PG',
+        'TV-Y',
+        'TV-G',
+        'TV-Y7',
+        'G',
+        'NC-17'
+    ]
     
     // Use all possible values for domain to keep axis consistent, but in our fixed order
     // $: allAges = fixedAgeOrder.filter(age => ageData.some(d => d.age_certification === age));
@@ -128,6 +152,10 @@
                     
                     x={ageXScale(d.age_certification)}
                     y={ageYScale(d.count) - 10}
+                    fill={getColorForAge(d.age_certification)}
+                    stroke="#000"
+                    stroke-width="0.5"
+                    opacity={clickedAges.length > 0 && !clickedAges.includes(d.age_certification) ? 0.3 : 1}
                     width={ageXScale.bandwidth()}
                     height={usableArea.bottom - ageYScale(d.count)}
                 />
@@ -223,15 +251,16 @@
     rect {
         transition: 200ms;
         transform-origin: center;
-        fill: #b81d24;
+        /* fill: #b81d24; */
+        /* opacity: 0.5; */
     }
     
     rect:hover {
-        opacity: 0.5;
+        /* opacity: 0.8; */
     }
     
     .selected {
-        fill: #3a4749;
+        /* opacity: 1; */
     }
     
     .fixed-tooltip {

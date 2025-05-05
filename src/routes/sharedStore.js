@@ -17,6 +17,21 @@ function createSharedStore() {
         scoreData: []
     });
 
+    // Age certification color scheme
+    const ageCertificationColors = {
+        'R': '#006400',       // Red
+        'PG': '#377EB8',      // Blue
+        'TV-14': '#4DAF4A',   // Green
+        'PG-13': '#984EA3',   // Purple
+        'TV-MA': '#FF7F00',   // Orange
+        'TV-PG': '#FFFF33',   // Yellow
+        'TV-Y': '#A65628',    // Brown
+        'TV-G': '#F781BF',    // Pink
+        'TV-Y7': '#999999',   // Gray
+        'G': '#66C2A5',       // Teal
+        'NC-17': '#FC8D62'    // Coral
+    };
+
     // Return a store with custom methods that can be called from any component
     const store = {
         // Standard subscribe method for reactive updates
@@ -92,6 +107,7 @@ function createSharedStore() {
         // Process age data with optional year filter
         processAgeData: (dataToProcess, yearFilter = null, scoreFilter = null) => {
             const data = dataToProcess || get(movieDataStore);
+            console.log("Data inside process age data function", data)
             if (!data || data.length === 0) return;
             
             let filteredData = yearFilter && yearFilter.length > 0
@@ -136,6 +152,16 @@ function createSharedStore() {
             });
             const scoreData = filteredData.map(item => item.imdb_score)
             storeData.update(state => ({ ...state, scoreData }));
+        },
+
+        // Get color for a specific age certification
+        getColorForAge(ageCertification) {
+            return ageCertificationColors[ageCertification] || '#777777'; // Default gray for unknown values
+        },
+
+        // Get the entire color mapping for reference
+        get ageColorScheme() {
+            return {...ageCertificationColors};
         }
     };
     
