@@ -8,22 +8,19 @@
     let ageTooltip;
     let hoveredAgeIndex = -1;
     let totalMoviesAge = 0;
+    let tooltipX = 0;
+    let tooltipY = 0;
 
     // Component properties
-    export let width = 800, height = 500;
+    export let width, height;
     export let usableArea = {
-        top: 30,
-        right: 30,
-        bottom: 70,
-        left: 50,
-        width: 800 - 50 - 30,
-        height: 500 - 30 - 70
     };
 
     // Store data subscriptions
     let ageData = [];
     let clickedAges = [];
     let clickedYears = [];
+    let clickedScores = [];
 
     // Subscribe to store changes
     const unsubscribeStore = sharedStore.subscribe(data => {
@@ -38,6 +35,10 @@
     const unsubscribeClickedYears = sharedStore.subscribeToClickedYears(years => {
         clickedYears = years;
     });
+
+    const unsubscribeClickedScores = sharedStore.subscribeToClickedScores(scores => {
+        clickedScores = scores;
+    });
     
     // Clean up subscriptions when component is destroyed
     onMount(() => {
@@ -45,15 +46,23 @@
             unsubscribeStore();
             unsubscribeClickedAges();
             unsubscribeClickedYears();
+            unsubscribeClickedScores();
         };
     });
 
     function ageBarInteraction(index, evt) {
         if (evt.type === 'mouseenter') {
             hoveredAgeIndex = index;
+            const rectElement = evt.currentTarget.getBoundingClientRect();
+            const containerElement = svgAgeChart.getBoundingClientRect();
+
+            tooltipX = rectElement.left + rectElement.width / 2 - containerElement.left;
+            tooltipY = rectElement.top - containerElement.top - 10; 
+
         } else if (evt.type === 'mouseleave') {
             hoveredAgeIndex = -1;
         } else if(evt.type === "click") {
+            
             let ageCertification = ageData[index].age_certification;
             
             // Toggle clicked age
@@ -79,7 +88,7 @@
 
     $: ageXScale = d3.scaleBand()
         .domain(allAges)
-        .range([usableArea.left, usableArea.right])
+        .range([usableArea.left + 20, usableArea.right])
         .padding(0.1);
 
     $: ageYMax = Math.max(d3.max(ageData.map(d => d.count)) || 0, d3.max(ageData.map(d => d.count)) || 0);
@@ -89,21 +98,18 @@
         .range([usableArea.bottom, usableArea.top]);
 
     $: {
-        if (ageXAxis) d3.select(ageXAxis).call(d3.axisBottom(ageXScale));
-        if (ageYAxis) d3.select(ageYAxis).call(d3.axisLeft(ageYScale));
+        if (ageXAxis) d3.select(ageXAxis).call(d3.axisBottom(ageXScale)).style("font-size", "14px");
+        if (ageYAxis) d3.select(ageYAxis).call(d3.axisLeft(ageYScale)).style("font-size", "14px");
     }
 </script>
 
 <div class="chart">
     <h2>Movies by Age Certification</h2>
-    <div class="chart-info">
-        <span class="total-counter">Total Movies: {totalMoviesAge}</span>
-    </div>
     
     <div class="chart-container">
-        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgAgeChart}>
-            <g transform="translate(0, {usableArea.bottom})" bind:this={ageXAxis}/>
-            <g transform="translate({usableArea.left}, 0)" bind:this={ageYAxis}/>
+        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgAgeChart} style="background-color: inherit; border: 0">
+            <g transform="translate(0, {usableArea.bottom - 10})" color="#f5f5f1" bind:this={ageXAxis}/>
+            <g transform="translate({usableArea.left + 20}, -10)" color="#f5f5f1" bind:this={ageYAxis}/>
         
             <g class="bars">
             {#each ageData as d, index}
@@ -113,34 +119,40 @@
                     on:click={evt => ageBarInteraction(index, evt)}
                     
                     class:selected={clickedAges.includes(d.age_certification)}
-                    class:filtered={clickedYears.length > 0}
+                    class:filtered={clickedYears.length > 0 || clickedScores.length > 0}
                     
                     x={ageXScale(d.age_certification)}
-                    y={ageYScale(d.count)}
+                    y={ageYScale(d.count) - 10}
                     width={ageXScale.bandwidth()}
                     height={usableArea.bottom - ageYScale(d.count)}
-                    fill="steelblue"
                 />
             {/each}
             </g>
             
             <text
             x={(usableArea.left + usableArea.right) / 2}
-            y={height - 10}
+            y={height + 30}
             text-anchor="middle"
-            font-size="12"
+            font-size="18"
+            fill="#f5f5f1"
             >Age Certification</text>
         
             <text
             x={-usableArea.top - usableArea.height / 2}
-            y={15}
+            y={8}
             text-anchor="middle"
-            font-size="12"
+            font-size="18"
             transform="rotate(-90)"
+            fill="#f5f5f1"
             >Number of Movies</text>
         </svg>
     
-        <div class="fixed-tooltip" class:hidden={hoveredAgeIndex === -1} bind:this={ageTooltip}>
+        <div 
+        class="fixed-tooltip" 
+        class:hidden={hoveredAgeIndex === -1}
+        bind:this={ageTooltip}
+        style={`position: absolute; left: ${tooltipX}px; top: ${tooltipY}px; transform: translate(-50%, -100%);`}
+        >
             <div class="tooltip-content">
                 <strong>Certification:</strong> {hoveredAge.age_certification || ''}
                 <strong>Movies:</strong> {hoveredAge.count || 0}
@@ -153,6 +165,7 @@
     /* GENERAL STYLES */
     * {
         box-sizing: border-box;
+        color: #f5f5f1;
     }
     
     h2 {
@@ -180,11 +193,16 @@
         height: auto;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         border-radius: 4px;
+
+        height: 90%;
     }
     
     .chart {
-        flex: 1;
-        min-width: 300px;
+        width: 100%;
+        height: 45%;
+
+        margin-bottom: 15px;
+        background-color: #221f1f;
     }
     
     .chart-info {
@@ -205,34 +223,31 @@
     
     .chart-container {
         position: relative;
+
+        height: 80%;
+
+        border: 0;
+        outline: #221f1f;
+        background-color: inherit;
     }
     
     rect {
         transition: 200ms;
         transform-origin: center;
+        fill: #b81d24;
+        opacity: 0.8;
     }
     
     rect:hover {
-        fill: lightcoral;
+        opacity: 0.5;
     }
     
     .selected {
-        fill: lightcoral;
-    }
-    
-    .filtered {
-        fill: steelblue;
-        opacity: c.8;
-    }
-    
-    .filtered.selected {
-        fill: lightcoral;
-        opacity: 1;
+        fill: #e50914;
     }
     
     .fixed-tooltip {
-        background-color: #f9f9f9;
-        border: 1px solid #ddd;
+        background-color: #131834;
         border-radius: 4px;
         padding: 8px 12px;
         margin-top: 10px;
@@ -243,7 +258,7 @@
     }
     
     .fixed-tooltip.hidden {
-        opacity: 0.2;
+        opacity: 0;
     }
     
     .tooltip-content {
@@ -263,5 +278,14 @@
         .chart {
             width: 100%;
         }
+    }
+
+    h2, text{
+        margin: 0;
+        margin-bottom: 2px;
+        color: #f5f5f1;
+    }
+    h2::after{
+        color: #f5f5f1;
     }
 </style>

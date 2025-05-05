@@ -6,7 +6,13 @@
   // --- Imports for the bar charts ---
   import BarplotAge from './BarplotAge.svelte';
   import BarplotYear from './BarplotYear.svelte';
-  import { sharedStore, clickedAgesStore, clickedYearsStore } from './sharedStore';
+  import BarplotScore from './BarplotScore.svelte';
+  import {
+    sharedStore,
+    clickedAgesStore,
+    clickedYearsStore,
+    clickedScoresStore
+  } from './sharedStore';
   import { get } from 'svelte/store';
 
   // Scatter plot variables
@@ -27,10 +33,13 @@
   let clickedMovies = [];
   let genreList = [];
   let selectedGenre = "";
+  let totalTitles;
   
   // All charts variables
-  let width = 800, height = 500;
+  let width = 800, height = 400;
+  let widthAgeScores = 600, heightAgeScores = 250;
   let margin = { top: 20, right: 30, bottom: 50, left: 50 };
+  let marginAgeScores = { top: 20, right: 15, bottom: 0, left: 25 };
   let usableArea = {
     top: margin.top,
     right: width - margin.right,
@@ -38,6 +47,14 @@
     left: margin.left,
     width: width - margin.left - margin.right,
     height: height - margin.top - margin.bottom
+  };
+  let usableAreaAgeScores = {
+    top: marginAgeScores.top,
+    right: widthAgeScores - marginAgeScores.right,
+    bottom: heightAgeScores - marginAgeScores.bottom,
+    left: marginAgeScores.left,
+    width: widthAgeScores - marginAgeScores.left - marginAgeScores.right,
+    height: heightAgeScores - marginAgeScores.top - marginAgeScores.bottom
   };
   
   const jitterAmount = 5;
@@ -208,6 +225,7 @@
   
   $: clickedYears = $clickedYearsStore
   $: clickedAges = $clickedAgesStore
+  $: clickedScores = $clickedScoresStore
 
   // Filter by searchTerm and selectedActor
   $: filteredData = movieData.filter(d => {
@@ -227,15 +245,19 @@
     // Cross-filtering with bar charts
     const matchesYearFilter = clickedYears.length === 0 || clickedYears.includes(d.release_year.toString());
     const matchesAgeFilter = clickedAges.length === 0 || clickedAges.includes(d.age_certification);
+    const matchesScoreFilter = clickedScores.length === 0 || clickedScores.includes(d.imdb_score);
 
-    return matchesTitle && matchesActor && matchesType && matchesGenre && matchesYearFilter && matchesAgeFilter;
+    return matchesTitle && matchesActor && matchesType && matchesGenre && matchesYearFilter && matchesAgeFilter && matchesScoreFilter;
   });
 
   // Re-process bar chart data whenever the scatter plot filters change
   $: {
-    sharedStore.processYearData(movieData, get(clickedAgesStore));
-    sharedStore.processAgeData(movieData, get(clickedYearsStore));
+    sharedStore.processYearData(movieData, $clickedAgesStore, $clickedScoresStore);
+    sharedStore.processAgeData(movieData, $clickedYearsStore, $clickedScoresStore);
+    sharedStore.processScoreData(movieData, $clickedYearsStore, $clickedAgesStore);
   }
+
+  $: {totalTitles = filteredData.length}
 
   // --- Function to process shared bar 
   function processAllData() {
@@ -244,203 +266,263 @@
     
     // Process data for release years
     sharedStore.processYearData();
+    
+    // Process data for imdb score
+    sharedStore.processScoreData();
   }
   
 </script>
 
-<h1>Movie Data Visualization Dashboard</h1>
-
-<div class="dashboard">
-  <section class="scatter-plot-section">
-    <h2>IMDb Scores by Release Year</h2>
-    
-    <dl class="info tooltip" hidden={hoveredMovie === null} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={tooltipScatter}>
-      <dt>Title</dt>
-      <dd>{hoveredMovie?.title}</dd>
-      
-      <dt>Year</dt>
-      <dd>{hoveredMovie?.release_year}</dd>
-      
-      <dt>IMDb Score</dt>
-      <dd>{hoveredMovie?.imdb_score}</dd>
-    </dl>
-    
-    <div class="filters">
-      <div class="filter-group">
-        <input
-          type="text"
-          placeholder="Search movies..."
-          bind:value={searchTerm}
-          class="filter-input"
-        />
-      </div>
-
-      <div class="filter-group">
-        <input
-          type="text"
-          placeholder="Search actors..."
-          bind:value={selectedActor}
-          list="actors"
-          class="filter-input"
-        />
+<div class="content">
+  <h1>Netflix Titles Data Visualization Dashboard</h1>
+  
+  <div class="dashboard">
+    <div class="up-charts">
+      <section class="scatter-plot-section">
+        <h2>IMDb Scores by Release Year</h2>
         
-        <datalist id="actors">
-          {#each actorList as actor}
-            <option value={actor}>{actor}</option>
-          {/each}
-        </datalist>
-      </div>
-
-      <div class="filter-group">
-        <input
-          type="text"
-          placeholder="Search genres..."
-          bind:value={selectedGenre}
-          list="genres"
-          class="filter-input"
-        />
-        <datalist id="genres">
-          {#each genreList as genre}
-            <option value={genre}>{genre}</option>
-          {/each}
-        </datalist>
-      </div>
-
-      <label style="margin-right: 15px;">
-        <input type="checkbox" bind:checked={showMovies}>
-        Movies
-      </label>
-      
-      <label>
-        <input type="checkbox" bind:checked={showShows}>
-        Shows
-      </label>
-
-    </div>
-    
-    <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgScatter}>
-      <g transform="translate(0, {usableArea.bottom})" bind:this={xAxisScatter} />
-      <g transform="translate({usableArea.left}, 0)" bind:this={yAxisScatter} />
-    
-      <g class="dots">
-        {#each filteredData as d, index}
-          <circle
-            on:mouseenter={evt => dotInteraction(index, evt)}
-            on:mouseleave={evt => dotInteraction(index, evt)}
-            on:click={() => handleDotClick(index)}
-            cx={xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount}
-            cy={yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount}
-            r="4"
-            fill="steelblue"
-            fill-opacity="0.7"
-          />
-        {/each}
-      </g>
-    
-      <text
-        x={(usableArea.left + usableArea.right) / 2}
-        y={height - 10}
-        text-anchor="middle"
-        font-size="12"
-      >Release Year</text>
-    
-      <text
-        x={-usableArea.top - usableArea.height / 2}
-        y={15}
-        text-anchor="middle"
-        font-size="12"
-        transform="rotate(-90)"
-      >IMDb Score</text>
-    </svg>
-  </section>
-
-  {#each clickedMovies as movie, index (movie.id)}
-      <div 
-        class="movie-popup" 
-        style="
-          left: {movie.position.x}px;
-          top: {movie.position.y}px;
-          z-index: {movie.zIndex || 999};
-        "
-        on:mousedown={(e) => {
-          bringToFront(movie.id);
-          startDrag(e, movie.id);
-        }}
-      >
-
-      <div class="drag-handle">
-        <button class="close-btn" on:click={() => closeMovie(movie.id)} title="Close">×</button>
-        <h3>{movie.title} ({movie.release_year})</h3>
-      </div>
-      
-      <div class="movie-details">
-        <p><strong>Type:</strong> {movie.type === "MOVIE" ? "Movie" : "TV Show"}</p>
-        <p><strong>IMDb Score:</strong> {movie.imdb_score}</p>
-        <p><strong>Age Certification:</strong> {movie.age_certification || 'N/A'}</p>
+        <dl class="info tooltip" hidden={hoveredMovie === null} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={tooltipScatter}>
+          <dt>Title</dt>
+          <dd>{hoveredMovie?.title}</dd>
+          
+          <dt>Year</dt>
+          <dd>{hoveredMovie?.release_year}</dd>
+          
+          <dt>IMDb Score</dt>
+          <dd>{hoveredMovie?.imdb_score}</dd>
+        </dl>
         
-        {#if movie.directors.length > 0}
-          <p><strong>Director(s):</strong> {movie.directors.join(', ')}</p>
-        {:else}
-          <p><strong>Director(s):</strong> N/A</p>
-        {/if}
-        
-        {#if movie.actors.length > 0}
-          <p><strong>Cast:</strong> {movie.actors.join(', ')}</p>
-        {:else}
-          <p><strong>Cast:</strong> N/A</p>
-        {/if}
-        
-        {#if movie.genres.length > 0}
-          <p><strong>Genres:</strong> {movie.genres.join(', ')}</p>
-        {:else}
-          <p><strong>Genres:</strong> N/A</p>
-        {/if}
-        
-        <div class="movie-description">
-          <strong>Description:</strong>
-          <p>{movie.description}</p>
+        <div class="filters">
+          <div class="filter-group">
+            <input
+              type="text"
+              placeholder="Search movies..."
+              bind:value={searchTerm}
+              class="filter-input"
+            />
+          </div>
+    
+          <div class="filter-group">
+            <input
+              type="text"
+              placeholder="Search actors..."
+              bind:value={selectedActor}
+              list="actors"
+              class="filter-input"
+            />
+            
+            <datalist id="actors">
+              {#each actorList as actor}
+                <option value={actor}>{actor}</option>
+              {/each}
+            </datalist>
+          </div>
+    
+          <div class="filter-group">
+            <input
+              type="text"
+              placeholder="Search genres..."
+              bind:value={selectedGenre}
+              list="genres"
+              class="filter-input"
+            />
+            <datalist id="genres">
+              {#each genreList as genre}
+                <option value={genre}>{genre}</option>
+              {/each}
+            </datalist>
+          </div>
+  
+          <div class="checkbox-group">
+            <label>
+              <input type="checkbox" bind:checked={showMovies}>
+              Movies
+            </label>
+            
+            <label>
+              <input type="checkbox" bind:checked={showShows}>
+              Shows
+            </label>
+          </div>
+    
         </div>
-      </div>
-    </div>
-  {/each}
-
-  <section class="bar-charts-section">
-    <div class="chart-controls">
-      <button on:click={() => {
-          sharedStore.clickedAges = [];
-          sharedStore.clickedYears = [];
-      }} class="reset-button">Reset All Filters</button>
-    </div>
-
-    <div class="charts-container">
-      <BarplotAge 
-        width={width}
-        height={height}
-        usableArea={usableArea}
-      />
         
-      <BarplotYear 
-        width={width}
-        height={height}
-        usableArea={usableArea}
-      />
-    </div>
+        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgScatter} style="background-color: inherit; border: 0">
+          <text
+            x={usableArea.left + 10} 
+            y={usableArea.top + 20} 
+            font-size="12"
+            fill="#f5f5f1"
+          >
+            Click on a point to show more details*
+          </text>
 
-  </section>
+          <rect 
+            class="total-counter-rect"
+            x={usableArea.left + 30}
+            y={usableArea.top + 260}
+            width="140"
+            height="30"
+            fill="url(#grad1)"
+            stroke="#ccc"
+            stroke-width="1"
+            rx="8"
+            ry="8"
+            filter="url(#shadow)"
+          />
+          
+          <text
+            class="total-counter-text"
+            x={usableArea.left + 35}
+            y={usableArea.top + 280}
+            font-size="13"
+            fill="#f5f5f1"
+            font-weight="bold"
+          >
+            🎬 Total Titles: {totalTitles}
+          </text>
+  
+          <g transform="translate(0, {usableArea.bottom})" color="#f5f5f1" bind:this={xAxisScatter} />
+          <g transform="translate({usableArea.left}, 0)" color="#f5f5f1" bind:this={yAxisScatter} />
+        
+          <g class="dots">
+            {#each filteredData as d, index}
+              <circle
+                on:mouseenter={evt => dotInteraction(index, evt)}
+                on:mouseleave={evt => dotInteraction(index, evt)}
+                on:click={() => handleDotClick(index)}
+                cx={xScale(d.release_year) + (Math.random() - 0.5) * jitterAmount}
+                cy={yScale(d.imdb_score) + (Math.random() - 0.5) * jitterAmount}
+                r="4"
+                fill="#b81d24"
+                fill-opacity="0.7"
+                />
+                {/each}
+              </g>
+              
+          <text
+          x={(usableArea.left + usableArea.right) / 2}
+          y={height - 10}
+          text-anchor="middle"
+          font-size="12"
+          fill="#f5f5f1"
+          >Release Year</text>
+          
+          <text
+          x={-usableArea.top - usableArea.height / 2}
+          y={15}
+          text-anchor="middle"
+          font-size="12"
+          transform="rotate(-90)"
+          fill="#f5f5f1"
+          >IMDb Score</text>
+        </svg>
+      </section>
+    
+      {#each clickedMovies as movie, index (movie.id)}
+          <div 
+            class="movie-popup" 
+            style="
+              left: {movie.position.x}px;
+              top: {movie.position.y}px;
+              z-index: {movie.zIndex || 999};
+            "
+            on:mousedown={(e) => {
+              bringToFront(movie.id);
+              startDrag(e, movie.id);
+            }}
+          >
+    
+          <div class="drag-handle">
+            <button class="close-btn" on:click={() => closeMovie(movie.id)} title="Close">×</button>
+            <h3>{movie.title} ({movie.release_year})</h3>
+          </div>
+          
+          <div class="movie-details">
+            <p><strong>Type:</strong> {movie.type === "MOVIE" ? "Movie" : "TV Show"}</p>
+            <p><strong>IMDb Score:</strong> {movie.imdb_score}</p>
+            <p><strong>Age Certification:</strong> {movie.age_certification || 'N/A'}</p>
+            
+            {#if movie.directors.length > 0}
+              <p><strong>Director(s):</strong> {movie.directors.join(', ')}</p>
+            {:else}
+              <p><strong>Director(s):</strong> N/A</p>
+            {/if}
+            
+            {#if movie.actors.length > 0}
+              <p><strong>Cast:</strong> {movie.actors.join(', ')}</p>
+            {:else}
+              <p><strong>Cast:</strong> N/A</p>
+            {/if}
+            
+            {#if movie.genres.length > 0}
+              <p><strong>Genres:</strong> {movie.genres.join(', ')}</p>
+            {:else}
+              <p><strong>Genres:</strong> N/A</p>
+            {/if}
+            
+            <div class="movie-description">
+              <strong>Description:</strong>
+              <p class="p-movie-description">{movie.description}</p>
+            </div>
+          </div>
+        </div>
+      {/each}
+    
+      <section class="bar-charts-section">
+        <div class="chart-controls">
+          <p class="filter-instruction">Click on a bar to apply a filter*</p>
+          <button on:click={() => {
+              sharedStore.clickedAges = [];
+              sharedStore.clickedYears = [];
+              sharedStore.clickedScores = [];
+          }} class="reset-button">Reset All Bar Chart Filters
+          </button>
+        </div>
+        
+        <div class="charts-container">
+          <BarplotAge 
+            width={widthAgeScores }
+            height={heightAgeScores}
+            usableArea={usableAreaAgeScores}
+          />
+            
+          
+          <BarplotScore 
+          width={widthAgeScores}
+          height={heightAgeScores}
+          usableArea={usableAreaAgeScores}
+          />
+        </div>
+      </section>
+    </div>
+  
+    <section class="year-bar">
+      <BarplotYear 
+      />
+    </section>
+  </div>
 </div>
+
 
 <style>
 /* GENERAL STYLES */
 * {
   box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.content {
+  background-color: inherit;
+  border: 0;
 }
 
 h1 {
   text-align: center;
   margin-bottom: 30px;
-  color: #333;
+  color: #f5f5f1;
   border-bottom: 2px solid #ddd;
   padding-bottom: 10px;
+  border-bottom: solid #f5f5f1;
 }
 
 h2 {
@@ -460,8 +542,19 @@ h2::after {
 }
 
 .dashboard {
-  max-width: 1600px;
+  width: 95%;
   margin: 0 auto;
+
+  height: 90vh;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 15px;
+
+  background-color: #221f1f;
 }
 
 /* SECTIONS */
@@ -484,6 +577,12 @@ svg {
   border-radius: 4px;
 }
 
+.scatter-plot-section{
+  height: 100%;
+  width: 60%;
+  background-color: inherit;
+}
+
 /* SCATTER PLOT */
 .scatter-plot-section .filters {
   display: flex;
@@ -502,7 +601,7 @@ svg {
   width: 100%;
   padding: 8px;
   font-size: 14px;
-  border: 1px solid #ddd;
+  border: 0;
   border-radius: 4px;
 }
 
@@ -522,7 +621,7 @@ circle:hover {
   display: grid;
   margin: 0;
   grid-template-columns: auto auto;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: #131834;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   border-radius: 5px;
   backdrop-filter: blur(5px);
@@ -532,6 +631,7 @@ circle:hover {
   left: 1em;
   z-index: 100;
   font-size: 14px;
+  color: #f5f5f1;
 }
 
 .info.tooltip[hidden]:not(:hover, :focus-within) {
@@ -555,37 +655,44 @@ circle:hover {
 /* BAR CHARTS */
 .charts-container {
   display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  flex-direction: column;
+  align-items: center;
+
+  /* gap: 20px; */
+  width: 100%;
+  height: 100%;
 }
 
 /* CONTROLS */
 .chart-controls {
+  width: 100%;
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 20px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .reset-button {
-  background: #f0f0f0;
-  border: 1px solid #ccc;
+  background: #b81d24;
+  border: 0;
   border-radius: 4px;
   padding: 8px 15px;
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s;
+  color: inherit;
 }
 
 .reset-button:hover {
-  background: #e0e0e0;
+  background: #e50914;
 }
 
-/* RESPONSIVE LAYOUTS */
+/* RESPONSIVE LAYOUTS
 @media (max-width: 900px) {
   .charts-container {
     flex-direction: column;
   }
-}
+} */
 
 /* Click Window */
 .movie-popup {
@@ -599,7 +706,13 @@ circle:hover {
   z-index: 999;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   border-radius: 8px;
+  background-color: #221f1f;
+  color: #f5f5f1;
   /* Removemos qualquer transparência ou transform */
+}
+
+.p-movie-description{
+  color: #f5f5f1 !important;
 }
 
 /* Estilo do cabeçalho arrastável */
@@ -661,4 +774,78 @@ circle:hover {
   color: #444;
 }
 
+.bar-charts-section {
+  height: 100%;
+  width: 40%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: inherit;
+  color: #f5f5f1;
+
+  margin: 0;
+}
+.year-bar {
+  width: 95%;
+  height: 50%;
+
+  display: flex;
+
+  background-color: inherit;
+}
+
+.up-charts {
+  display: flex;
+  height: 80%;
+  width: 95%;
+
+  justify-content: space-between;
+  gap: 10px;
+  background-color: inherit;
+
+  margin: 0;
+}
+
+.checkbox-group label {
+  display: block;       
+  margin-bottom: -2px;
+  margin-top: -2px;
+}
+
+.total-counter-rect {
+  /* fill: lightgray;  */
+  stroke-width: 0;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+  fill: #b81d24;
+}
+
+.total-counter-text {
+  font-size: 13px;
+  fill: "#f5f5f1";
+  font-weight: bold;
+}
+
+dl {
+  background-color: inherit;
+}
+
+.filters,
+.filter-group,
+.checkbox-group {
+  background-color: inherit;
+  color: #f5f5f1;
+}
+
+.filter-input{
+  background-color: #b81d24;
+  color: #f5f5f1;
+}
+.filter-input::placeholder{
+  color: #f5f5f1;
+}
+
+h2 {
+  color: #f5f5f1;
+}
 </style>

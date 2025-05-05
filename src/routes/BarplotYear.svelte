@@ -1,6 +1,6 @@
 <script>
     import * as d3 from 'd3';
-    import { sharedStore } from './sharedStore.js';
+    import { sharedStore, clickedAgesStore, clickedYearsStore, clickedScoresStore } from './sharedStore.js';
     import { onMount } from 'svelte';
     
     let svgYearChart;
@@ -8,22 +8,26 @@
     let yearTooltip;
     let hoveredYearIndex = -1;
     let totalMoviesYear = 0;
+    let tooltipX = 0;
+    let tooltipY = 0;
 
     // Component properties
-    export let width = 800, height = 500;
-    export let usableArea = {
-        top: 30,
-        right: 30,
-        bottom: 70,
-        left: 50,
-        width: 800 - 50 - 30,
-        height: 500 - 30 - 70
+    export let width = 2200, height = 400;
+    let margin = { top: 20, right: 30, bottom: 50, left: 50 };
+    let usableArea = {
+        top: margin.top,
+        right: width - margin.right,
+        bottom: height - margin.bottom,
+        left: margin.left,
+        width: width - margin.left - margin.right,
+        height: height - margin.top - margin.bottom
     };
 
     // Store data subscriptions
     let yearData = [];
     let clickedAges = [];
     let clickedYears = [];
+    let clickedScores = [];
 
     // Subscribe to store changes
     const unsubscribeStore = sharedStore.subscribe(data => {
@@ -39,24 +43,35 @@
         clickedYears = years;
     });
 
+    const unsubscribeClickedScores = sharedStore.subscribeToClickedScores(scores => {
+        clickedScores = scores;
+    });
+
     // Clean up subscriptions when component is destroyed
     onMount(() => {
         return () => {
             unsubscribeStore();
             unsubscribeClickedAges();
             unsubscribeClickedYears();
+            unsubscribeClickedScores();
         };
     });
 
     function yearBarInteraction(index, evt) {
         if (evt.type === 'mouseenter') {
             hoveredYearIndex = index;
+
+            const rect = evt.target.getBoundingClientRect();
+            const containerRect = svgYearChart.getBoundingClientRect();
+
+            tooltipX = rect.x - containerRect.x + rect.width / 2 - yearTooltip.clientWidth / 2;
+            tooltipY = rect.y - containerRect.y - yearTooltip.clientHeight - 20; 
+
         } else if (evt.type === 'mouseleave') {
             hoveredYearIndex = -1;
-        } else if(evt.type === "click") {
+        } else if (evt.type === 'click') {
             let yearRelease = yearData[index].release_year;
             
-            // Toggle clicked age
             if (!clickedYears.includes(yearRelease)) {
                 sharedStore.clickedYears = [...clickedYears, yearRelease];
             } else {
@@ -86,21 +101,24 @@
         .range([usableArea.bottom, usableArea.top]);
 
     $:{
-        if (yearXAxis) d3.select(yearXAxis).call(d3.axisBottom(yearXScale));
+        if (yearXAxis) {
+            d3.select(yearXAxis)
+                .call(d3.axisBottom(yearXScale))
+                .selectAll('text')
+                .style('text-anchor', 'end')
+                .attr('transform', 'rotate(-45)');
+        }
         if (yearYAxis) d3.select(yearYAxis).call(d3.axisLeft(yearYScale));
     }
 </script>
 
 <div class="chart">
     <h2>Movies by Release Year</h2>
-    <div class="chart-info">
-        <span class="total-counter">Total Movies: {totalMoviesYear}</span>
-    </div>
         
         <div class="chart-container">
-        <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgYearChart}>
-            <g transform="translate(0, {usableArea.bottom})" bind:this={yearXAxis}/>
-            <g transform="translate({usableArea.left}, 0)" bind:this={yearYAxis}/>
+        <svg viewBox={`0 0 ${width } ${height}`} bind:this={svgYearChart} style="background-color: inherit; border: 0">
+            <g transform="translate(0, {usableArea.bottom})" color="#f5f5f1" bind:this={yearXAxis}/>
+            <g transform="translate({usableArea.left}, 0)" color="#f5f5f1" bind:this={yearYAxis}/>
             
             <g class="bars">
             {#each yearData as d, index}
@@ -110,37 +128,42 @@
                     on:click={evt => yearBarInteraction(index, evt)}
                     
                     class:selected={clickedYears.includes(d.release_year)}
-                    class:filtered={clickedAges.length > 0}
+                    class:filtered={clickedAges.length > 0 || clickedScores.length > 0}
 
                     x={yearXScale(d.release_year)}
                     y={yearYScale(d.count)}
                     width={yearXScale.bandwidth()}
                     height={usableArea.bottom - yearYScale(d.count)}
-                    fill="steelblue"
                 />
             {/each}
             </g>
 
             <text
             x={(usableArea.left + usableArea.right) / 2}
-            y={height - 10}
+            y={height + 10}
             text-anchor="middle"
-            font-size="12"
+            font-size="24"
+            fill="#f5f5f1"
             >Release Year</text>
-
+            
             <text
             x={-usableArea.top - usableArea.height / 2}
-            y={15}
+            y={0}
             text-anchor="middle"
-            font-size="12"
+            font-size="24"
             transform="rotate(-90)"
+            fill="#f5f5f1"
             >Number of Movies</text>
         </svg>
         
-        <div class="fixed-tooltip" class:hidden={hoveredYearIndex === -1} bind:this={yearTooltip}>
+        <div
+        class="fixed-tooltip"
+        class:hidden={hoveredYearIndex === -1}
+        bind:this={yearTooltip}
+        style={`left: ${tooltipX}px; top: ${tooltipY}px; position: absolute;`}>
             <div class="tooltip-content">
-            <strong>Release Year:</strong> {hoveredYear.release_year || ''}
-            <strong>Movies:</strong> {hoveredYear.count || 0}
+                <strong>Release Year:</strong> {hoveredYear.release_year || ''}
+                <strong>Movies:</strong> {hoveredYear.count || 0}
             </div>
         </div>
         </div>
@@ -150,6 +173,7 @@
     /* GENERAL STYLES */
     * {
         box-sizing: border-box;
+        color: #f5f5f1;
     }
     
     h2 {
@@ -177,11 +201,15 @@
         height: auto;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         border-radius: 4px;
+
+        height: 90%;
     }
     
     .chart {
-        flex: 1;
-        min-width: 300px;
+        width: 100%;
+        height: 100%;
+
+        background-color: #221f1f;
     }
     
     .chart-info {
@@ -202,33 +230,32 @@
     
     .chart-container {
         position: relative;
+        
+        height: 90%;
+
+        border: 0;
+        outline: #221f1f;
+        background-color: inherit;
     }
     
     rect {
         transition: 200ms;
         transform-origin: center;
+        fill: #b81d24;
+        opacity: 0.8;
     }
     
     rect:hover {
-        fill: lightcoral;
+        opacity: 0.5;
     }
     
     .selected {
-        fill: lightcoral;
+        fill: #e50914;
     }
     
-    .filtered {
-        fill: steelblue;
-        opacity: c.8;
-    }
-    
-    .filtered.selected {
-        fill: lightcoral;
-        opacity: 1;
-    }
     
     .fixed-tooltip {
-        background-color: #f9f9f9;
+        background-color: #131834;
         border: 1px solid #ddd;
         border-radius: 4px;
         padding: 8px 12px;
@@ -240,7 +267,7 @@
     }
     
     .fixed-tooltip.hidden {
-        opacity: 0.2;
+        opacity: 0;
     }
     
     .tooltip-content {
@@ -260,5 +287,18 @@
         .chart {
             width: 100%;
         }
+    }
+
+    svg g {
+        font-size: 1.2em;
+    }
+
+    h2, text{
+        margin: 0;
+        margin-bottom: 2px;
+        color: #f5f5f1;
+    }
+    h2::after{
+        color: #f5f5f1;
     }
 </style>
