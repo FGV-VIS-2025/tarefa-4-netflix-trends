@@ -7,7 +7,6 @@
     let ageXAxis, ageYAxis;
     let ageTooltip;
     let hoveredAgeIndex = -1;
-    let totalMoviesAge = 0;
     let tooltipX = 0;
     let tooltipY = 0;
 
@@ -25,7 +24,6 @@
     // Subscribe to store changes
     const unsubscribeStore = sharedStore.subscribe(data => {
         ageData = data.ageData;
-        updateTotals();
     });
     
     const unsubscribeClickedAges = sharedStore.subscribeToClickedAges(ages => {
@@ -74,23 +72,30 @@
         }
     }
 
-    function updateTotals() {
-        totalMoviesAge = ageData.reduce((sum, item) => sum + item.count, 0);
-    }
-
-    $: hoveredAge = ageData[hoveredAgeIndex] || {};
+    // --- Fixing the age order in the x axis ---
+    const fixedAgeOrder = ['R',
+    'PG',
+    'TV-14',
+    'PG-13',
+    'TV-MA',
+    'TV-PG',
+    'TV-Y',
+    'TV-G',
+    'TV-Y7',
+    'G',
+    'NC-17']
     
-    // Use all possible values for domain to keep axis consistent
-    $: allAges = [...new Set(ageData.map(d => d.age_certification))];
-
-    // Use filtered data for the actual bars
-    $: filteredAgeValues = [...new Set(ageData.map(d => d.age_certification))];
-
+    // Use all possible values for domain to keep axis consistent, but in our fixed order
+    // $: allAges = fixedAgeOrder.filter(age => ageData.some(d => d.age_certification === age));
+    $: allAges = fixedAgeOrder;
+    
     $: ageXScale = d3.scaleBand()
         .domain(allAges)
         .range([usableArea.left + 20, usableArea.right])
         .padding(0.1);
 
+    $: hoveredAge = ageData[hoveredAgeIndex] || {};
+    
     $: ageYMax = Math.max(d3.max(ageData.map(d => d.count)) || 0, d3.max(ageData.map(d => d.count)) || 0);
     
     $: ageYScale = d3.scaleLinear()
@@ -108,8 +113,8 @@
     
     <div class="chart-container">
         <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgAgeChart} style="background-color: inherit; border: 0">
-            <g transform="translate(0, {usableArea.bottom - 10})" color="#f5f5f1" bind:this={ageXAxis}/>
-            <g transform="translate({usableArea.left + 20}, -10)" color="#f5f5f1" bind:this={ageYAxis}/>
+            <g transform="translate(0, {usableArea.bottom - 10})" color="#f5f5f1" bind:this={ageXAxis} style="font-size: 1.2em;"/>
+            <g transform="translate({usableArea.left + 20}, -10)" color="#f5f5f1" bind:this={ageYAxis} style="font-size: 1.2em;"/>
         
             <g class="bars">
             {#each ageData as d, index}
@@ -131,17 +136,17 @@
             
             <text
             x={(usableArea.left + usableArea.right) / 2}
-            y={height + 30}
+            y={height + 20}
             text-anchor="middle"
-            font-size="18"
+            font-size="22"
             fill="#f5f5f1"
             >Age Certification</text>
         
             <text
             x={-usableArea.top - usableArea.height / 2}
-            y={8}
+            y={-10}
             text-anchor="middle"
-            font-size="18"
+            font-size="22"
             transform="rotate(-90)"
             fill="#f5f5f1"
             >Number of Movies</text>
@@ -205,26 +210,10 @@
         background-color: #221f1f;
     }
     
-    .chart-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    
-    .total-counter {
-        background-color: #f0f0f0;
-        padding: 5px 10px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
-        font-weight: bold;
-        font-size: 14px;
-    }
-    
     .chart-container {
         position: relative;
 
-        height: 80%;
+        height: 90%;
 
         border: 0;
         outline: #221f1f;
@@ -235,7 +224,6 @@
         transition: 200ms;
         transform-origin: center;
         fill: #b81d24;
-        opacity: 0.8;
     }
     
     rect:hover {
@@ -243,7 +231,7 @@
     }
     
     .selected {
-        fill: #e50914;
+        fill: #3a4749;
     }
     
     .fixed-tooltip {

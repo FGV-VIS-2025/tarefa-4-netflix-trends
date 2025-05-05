@@ -28,10 +28,23 @@
     let clickedAges = [];
     let clickedYears = [];
     let clickedScoresBins = [];
+    let clickedScores = [];
     
     // Histogram parameters
     const binThresholds = d3.range(0, 10.5, 0.5); // Define bin edges
     let histogramData = [];
+
+    function getBinRange(score) {
+        // Find which bin the score falls into
+        for (let i = 0; i < binThresholds.length - 1; i++) {
+            if (score >= binThresholds[i] && score < binThresholds[i + 1]) {
+                return `${binThresholds[i]}-${binThresholds[i + 1]}`;
+            }
+        }
+        
+        // Fallback (shouldn't reach here with proper input)
+        return "Unknown";
+    }
 
     // Subscribe to store changes
     const unsubscribeStore = sharedStore.subscribe(data => {
@@ -41,19 +54,34 @@
     
     const unsubscribeClickedAges = sharedStore.subscribeToClickedAges(ages => {
         clickedAges = ages;
-        updateHistogram();
     });
     
     const unsubscribeClickedYears = sharedStore.subscribeToClickedYears(years => {
         clickedYears = years;
-        updateHistogram();
     });
     
-    const unsubscribeClickedScores = sharedStore.subscribeToClickedScores(() => {
-    // You might want to trigger a re-render or some other action here
-    // if changes to clickedScores from other components should affect this histogram's appearance
-    // For now, since the histogram itself updates clickedScores, this might be empty.
-    // However, it's good practice to subscribe if you anticipate external changes.
+    const unsubscribeClickedScores = sharedStore.subscribeToClickedScores(scores => {
+        clickedScores = scores;
+        let newClickedScoresBins = []
+
+        // Update clickedScores in the store based on the selected bins
+        clickedScoresBins.forEach(binRangeStr => {
+            const [start, end] = binRangeStr.split('-').map(Number);
+            
+            // Use a more precise comparison to ensure scores go in the right bin
+            // Adjust the filter to use >= start && < end to match D3's binning behavior
+            const scoresInCurrentBin = rawScoreData.filter(score => {
+                return score >= start && score < end;
+            });
+
+            clickedScores.forEach(score => {
+                if (scoresInCurrentBin.includes(score)){
+                    newClickedScoresBins = [...newClickedScoresBins, getBinRange(score)]
+                }
+            })
+        })
+
+        clickedScoresBins = [...new Set(newClickedScoresBins)]
     });
 
     // Clean up subscriptions when component is destroyed
@@ -78,6 +106,7 @@
             x1: bin.x1,
             count: bin.length
         }));
+
         updateTotals();
     }
 
@@ -93,7 +122,9 @@
         } else if (evt.type === 'mouseleave') {
             hoveredBin = null;
         } else if(evt.type === "click") {
-            const binRange = `${bin.x0}-${bin.x1}`
+            // Create a more precise bin identifier using bin boundaries with more precision
+            // This helps avoid floating point comparison issues
+            const binRange = `${bin.x0.toFixed(4)}-${bin.x1.toFixed(4)}`;
             
             if (!clickedScoresBins.includes(binRange)) {
                 clickedScoresBins = [...clickedScoresBins, binRange];
@@ -101,21 +132,28 @@
                 clickedScoresBins = clickedScoresBins.filter(b => b !== binRange);
             }
 
-            // Update shared store with the selected score ranges
-            const scoresInBin = rawScoreData
-                .filter(item => item >= bin.x0 && item < bin.x1)
-
+            // Clear previous selection of scores
+            let newClickedScores = [];
+            
             // Update clickedScores in the store based on the selected bins
-            let allScoresInClickedBins = [];
+            console.log("Clicked scores before processing", clickedScoresBins)
             clickedScoresBins.forEach(binRangeStr => {
                 const [start, end] = binRangeStr.split('-').map(Number);
-                const scoresInCurrentBin = rawScoreData
-                    .filter(item => item >= start && item < end)
-                allScoresInClickedBins = [...allScoresInClickedBins, ...scoresInCurrentBin];
+                
+                // Use a more precise comparison to ensure scores go in the right bin
+                // Adjust the filter to use >= start && < end to match D3's binning behavior
+                const scoresInCurrentBin = rawScoreData.filter(score => {
+                    return score >= start && score < end;
+                });
+                
+                newClickedScores = [
+                    ...newClickedScores,
+                    ...scoresInCurrentBin
+                ];
             });
-
-            // Remove duplicates if necessary
-            sharedStore.clickedScores = [...new Set(allScoresInClickedBins)];
+            
+            // Remove any potential duplicates
+            sharedStore.clickedScores = [...new Set(newClickedScores)];
         }
     }
 
@@ -146,17 +184,17 @@
     
     <div class="chart-container">
         <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgChart} style="background-color: inherit; border: 0">
-            <g transform="translate(0, {usableArea.bottom - 10})" color="#f5f5f1" bind:this={XAxis}/>
-            <g transform="translate({usableArea.left + 20}, -10)" color="#f5f5f1" bind:this={YAxis}/>
+            <g transform="translate(0, {usableArea.bottom - 10})" color="#f5f5f1" bind:this={XAxis} style="font-size: 1.2em;"/>
+            <g transform="translate({usableArea.left + 20}, -10)" color="#f5f5f1" bind:this={YAxis} style="font-size: 1.2em;"/>
         
             <g class="bars">
-            {#each histogramData as bin}
+            {#each histogramData as bin, idx}
                 <rect 
                     on:mouseenter={evt => binInteraction(bin, evt)}
                     on:mouseleave={evt => binInteraction(bin, evt)}
                     on:click={evt => binInteraction(bin, evt)}
                     
-                    class:selected={clickedScoresBins.includes(`${bin.x0}-${bin.x1}`)}
+                    class:selected={clickedScores.some(score => score > bin.x0 && score < bin.x1)}
                     class:filtered={clickedYears.length > 0 || clickedAges.length > 0}
                     
                     x={XScale(bin.x0)}
@@ -169,17 +207,17 @@
             
             <text
             x={(usableArea.left + usableArea.right) / 2}
-            y={height + 30}
+            y={height + 20}
             text-anchor="middle"
-            font-size="18"
+            font-size="22"
             fill="#f5f5f1"
             >IMDb Score</text>
         
             <text
             x={-usableArea.top - usableArea.height / 2}
-            y={8}
+            y={-10}
             text-anchor="middle"
-            font-size="18"
+            font-size="22"
             transform="rotate(-90)"
             fill="#f5f5f1"
             >Number of Movies</text>
@@ -240,26 +278,10 @@
         background-color: #221f1f;
     }
     
-    .chart-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    
-    .total-counter {
-        background-color: #f0f0f0;
-        padding: 5px 10px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
-        font-weight: bold;
-        font-size: 14px;
-    }
-    
     .chart-container {
         position: relative;
 
-        height: 80%;
+        height: 90%;
         
         border: 0;
         outline: #221f1f;
@@ -270,7 +292,6 @@
         transition: 200ms;
         transform-origin: center;
         fill: #b81d24;
-        opacity: 0.8;
     }
     
     rect:hover {
@@ -278,7 +299,7 @@
     }
     
     .selected {
-        fill: #e50914;
+        fill: #3a4749;
     }
     
     .fixed-tooltip {
