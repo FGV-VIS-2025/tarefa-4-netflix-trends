@@ -137,6 +137,7 @@
             text-anchor="middle"
             font-size="24"
             fill="#f5f5f1"
+            font-weight="bold"
             >Release Year</text>
             
             <text
@@ -146,6 +147,7 @@
             font-size="24"
             transform="rotate(-90)"
             fill="#f5f5f1"
+            font-weight="bold"
             >Number of Movies</text>
         </svg>
         

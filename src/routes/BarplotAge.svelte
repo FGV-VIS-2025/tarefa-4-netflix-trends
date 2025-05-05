@@ -164,10 +164,11 @@
             
             <text
             x={(usableArea.left + usableArea.right) / 2}
-            y={height + 20}
+            y={height + 30}
             text-anchor="middle"
             font-size="22"
             fill="#f5f5f1"
+            font-weight="bold"
             >Age Certification</text>
         
             <text
@@ -177,6 +178,7 @@
             font-size="22"
             transform="rotate(-90)"
             fill="#f5f5f1"
+            font-weight="bold"
             >Number of Movies</text>
         </svg>
     
