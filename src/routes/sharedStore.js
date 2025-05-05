@@ -107,7 +107,6 @@ function createSharedStore() {
         // Process age data with optional year filter
         processAgeData: (dataToProcess, yearFilter = null, scoreFilter = null) => {
             const data = dataToProcess || get(movieDataStore);
-            console.log("Data inside process age data function", data)
             if (!data || data.length === 0) return;
             
             let filteredData = yearFilter && yearFilter.length > 0

@@ -124,7 +124,8 @@
         } else if(evt.type === "click") {
             // Create a more precise bin identifier using bin boundaries with more precision
             // This helps avoid floating point comparison issues
-            const binRange = `${bin.x0.toFixed(4)}-${bin.x1.toFixed(4)}`;
+            // const binRange = `${bin.x0.toFixed(4)}-${bin.x1.toFixed(4)}`;
+            const binRange = `${bin.x0}-${bin.x1}`;
             
             if (!clickedScoresBins.includes(binRange)) {
                 clickedScoresBins = [...clickedScoresBins, binRange];
@@ -136,7 +137,6 @@
             let newClickedScores = [];
             
             // Update clickedScores in the store based on the selected bins
-            console.log("Clicked scores before processing", clickedScoresBins)
             clickedScoresBins.forEach(binRangeStr => {
                 const [start, end] = binRangeStr.split('-').map(Number);
                 
