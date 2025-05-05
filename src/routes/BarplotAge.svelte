@@ -24,7 +24,6 @@
     // Subscribe to store changes
     const unsubscribeStore = sharedStore.subscribe(data => {
         ageData = data.ageData;
-        console.log("ageData", ageData)
     });
     
     const unsubscribeClickedAges = sharedStore.subscribeToClickedAges(ages => {
