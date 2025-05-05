@@ -174,8 +174,8 @@
         .range([usableArea.bottom, usableArea.top]);
 
     $: {
-        if (XAxis) d3.select(XAxis).call(d3.axisBottom(XScale).tickValues(d3.range(0, 11, 1)));
-        if (YAxis) d3.select(YAxis).call(d3.axisLeft(YScale));
+        if (XAxis) d3.select(XAxis).call(d3.axisBottom(XScale).tickValues(d3.range(0, 11, 1))).style("font-size", "14px");
+        if (YAxis) d3.select(YAxis).call(d3.axisLeft(YScale)).style("font-size", "14px");
     }
 </script>
 

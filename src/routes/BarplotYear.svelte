@@ -111,6 +111,7 @@
         <svg viewBox={`0 0 ${width} ${height}`} bind:this={svgYearChart} style="background-color: inherit; border: 0">
             <g transform="translate(0, {usableArea.bottom})" color="#f5f5f1" bind:this={yearXAxis} style="font-size: 1.25em"/>
             <g transform="translate({usableArea.left}, 0)" color="#f5f5f1" bind:this={yearYAxis} style="font-size: 1.25em"/>
+
             
             <g class="bars">
             {#each yearData as d, index}

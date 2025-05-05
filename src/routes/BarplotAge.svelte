@@ -103,8 +103,8 @@
         .range([usableArea.bottom, usableArea.top]);
 
     $: {
-        if (ageXAxis) d3.select(ageXAxis).call(d3.axisBottom(ageXScale));
-        if (ageYAxis) d3.select(ageYAxis).call(d3.axisLeft(ageYScale));
+        if (ageXAxis) d3.select(ageXAxis).call(d3.axisBottom(ageXScale)).style("font-size", "14px");
+        if (ageYAxis) d3.select(ageYAxis).call(d3.axisLeft(ageYScale)).style("font-size", "14px");
     }
 </script>
 
